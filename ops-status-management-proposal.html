@@ -501,14 +501,14 @@ function renderViewContent(i){
 
 function renderPipelineMockup(){
   const cols = [
-    {name:'Not Started',color:'#e5e7eb',cards:[]},
-    {name:'Trip Identified',color:'#93c5fd',cards:[]},
+    {name:'Not Started',color:'#e5e7eb',cards:[{name:'Patagonia Explorer',dest:'Patagonia, Buenos Aires',date:'Jun 1 - Jun 12',travelers:'1'}]},
+    {name:'Trip Identified',color:'#93c5fd',cards:[{name:'Safari & Seychelles',dest:'Nairobi, Seychelles',date:'Mar 5 - Mar 16',travelers:'3'}]},
     {name:'Outline',color:'#c4b5fd',cards:[{name:'Tokyo Reset',dest:'Tokyo, Kyoto',date:'Jan 15 - Jan 24',travelers:'2'}]},
     {name:'Itinerary Review',color:'#fcd34d',cards:[{name:'Where Winter Glows',dest:'London, Paris',date:'Nov 30 - Dec 9',travelers:'3'}]},
-    {name:'Booking In Progress',color:'#fdba74',cards:[]},
-    {name:'Booking Complete',color:'#6ee7b7',cards:[]},
-    {name:'On Trip',color:'#67e8f9',cards:[]},
-    {name:'Post Trip',color:'#d1d5db',cards:[]}
+    {name:'Booking In Progress',color:'#fdba74',cards:[{name:'Amalfi Coast Anniversary',dest:'Amalfi Coast, Positano',date:'Oct 10 - Oct 18',travelers:'2'}]},
+    {name:'Booking Complete',color:'#6ee7b7',cards:[{name:'Greek Island Hop',dest:'Santorini, Mykonos',date:'Sep 12 - Sep 22',travelers:'2'}]},
+    {name:'On Trip',color:'#67e8f9',cards:[{name:'Maldives Honeymoon',dest:'Maldives',date:'Mar 15 - Mar 25',travelers:'2'}]},
+    {name:'Post Trip',color:'#d1d5db',cards:[{name:'Swiss Alps Ski Week',dest:'Zermatt, Verbier',date:'Feb 1 - Feb 8',travelers:'4'}]}
   ];
   let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:1000px">';
   cols.forEach(col => {
