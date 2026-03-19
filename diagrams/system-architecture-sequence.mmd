@@ -1,0 +1,107 @@
+%% =============================================================================
+%% Dynamic Trip Page — System Architecture Sequence Diagram
+%% =============================================================================
+%% Purpose: Shows the three primary data flows between Member, Mobile App,
+%%          BFF API, Write Queue, Notion API, and Notion DBs.
+%%
+%% Flows:
+%%   1. Trip Page Load    — GET request chain through BFF to Notion, with polling
+%%   2. Approve Component — Optimistic UI + write queue + task auto-creation
+%%   3. Post Comment      — Write queue + comment creation + task auto-creation
+%%
+%% Assumptions:
+%%   [A1] Write Queue enforces 2 req/sec to stay within Notion's 3 req/sec limit
+%%        while leaving headroom for read operations.
+%%   [A2] 60-second polling is the V1 real-time strategy (V1.5 adds SSE).
+%%   [A3] Task Dashboard writes are fire-and-forget — failures do not block
+%%        the member action (retry 3x with backoff, then log and move on).
+%%   [A4] Component Comments are a separate Notion DB (Mar 13 decision).
+%%   [A5] BFF returns a combined response (trip + components + comment counts)
+%%        in a single response to minimize round trips to the mobile client.
+%%
+%% Open Questions:
+%%   [Q1] Should the BFF batch the Trips + Components Notion queries in parallel,
+%%        or does the 3 req/sec limit make sequential safer?
+%%   [Q2] What is the exact retry backoff schedule for write queue failures?
+%%   [Q3] Does the Task Dashboard deduplication (5-min window) happen in the
+%%        BFF or in the write queue?
+%% =============================================================================
+
+sequenceDiagram
+    participant Member as Member (Mobile App)
+    participant RN as React Native App
+    participant BFF as BFF API (Node.js)
+    participant WQ as Write Queue (2 req/sec)
+    participant NAPI as Notion API (3 req/sec limit)
+    participant NDB as Notion DBs (Trips, Components, Comments)
+
+    rect rgb(20, 60, 80)
+    Note over Member, NDB: Flow 1 - Trip Page Load
+    Member->>RN: Opens trip page
+    RN->>BFF: GET /trips/:id (Bearer JWT)
+    BFF->>NAPI: Query Trips DB (page by ID)
+    NAPI->>NDB: Read trip page
+    NDB-->>NAPI: Trip data + component relations
+    NAPI-->>BFF: Trip JSON
+    BFF->>NAPI: Query Components DB (filter by trip)
+    NAPI->>NDB: Read components
+    NDB-->>NAPI: Components array
+    NAPI-->>BFF: Components JSON
+    BFF-->>RN: Combined response (trip + components + comments)
+    RN-->>Member: Render phase-dependent view
+    Note over RN: Start 60s polling cycle
+    alt Error - Trip not found
+        BFF-->>RN: 404 Not Found
+        RN-->>Member: "Trip not available" screen
+    end
+    alt Error - Auth failure
+        BFF-->>RN: 401 Unauthorized
+        RN-->>Member: Redirect to login
+    end
+    end
+
+    rect rgb(20, 70, 40)
+    Note over Member, NDB: Flow 2 - Approve Component
+    Member->>RN: Taps thumbs-up on component card
+    RN->>RN: Optimistic UI update (green checkmark overlay)
+    RN->>BFF: PATCH /trips/:id/components/:componentId/decision {decision: approved, decided_by: member_name}
+    BFF->>WQ: Enqueue write (rate-limited 2 req/sec)
+    WQ->>NAPI: Update Components page (Client Decision = Approved, Decision Date = now)
+    NAPI->>NDB: Write Client Decision = Approved
+    NDB-->>NAPI: 200 OK
+    WQ->>NAPI: Create Task page (Component - Approved by Member, Priority: Normal)
+    NAPI->>NDB: Write new task to Task Dashboard
+    NDB-->>NAPI: 200 OK
+    BFF-->>RN: 200 OK
+    Note over RN: Next 60s poll confirms server state
+    alt Error - Notion write fails
+        NAPI-->>WQ: 500 / 429 Rate Limited
+        WQ->>WQ: Retry 3x with exponential backoff
+        WQ-->>BFF: Failure after retries
+        BFF-->>RN: 500 Internal Server Error
+        RN->>RN: Revert optimistic UI
+        RN-->>Member: Toast - Could not save. Please try again.
+    end
+    end
+
+    rect rgb(50, 40, 80)
+    Note over Member, NDB: Flow 3 - Post Comment
+    Member->>RN: Types and sends comment on component
+    RN->>BFF: POST /trips/:id/components/:componentId/comments {comment: text, comment_type: client}
+    BFF->>WQ: Enqueue write (rate-limited 2 req/sec)
+    WQ->>NAPI: Create Comment page (Type=Client, Status=New, Component=relation)
+    NAPI->>NDB: Write new comment to Component Comments DB
+    NDB-->>NAPI: 201 Created
+    WQ->>NAPI: Create Task page (Component - New comment from Member, Priority: Normal)
+    NAPI->>NDB: Write new task to Task Dashboard
+    NDB-->>NAPI: 201 Created
+    BFF-->>RN: 201 Created
+    RN-->>Member: Toast - Sent! Your advisor will be notified.
+    alt Error - Comment write fails
+        NAPI-->>WQ: 500 / 429 Rate Limited
+        WQ->>WQ: Retry 3x with exponential backoff
+        WQ-->>BFF: Failure after retries
+        BFF-->>RN: 500 Internal Server Error
+        RN-->>Member: Toast - Message not sent. Tap to retry.
+    end
+    end

@@ -1,0 +1,210 @@
+// =============================================================================
+// Dynamic Trip Page — DBML Data Model
+// =============================================================================
+// Purpose: Defines the three Notion databases and their relationships for
+//          the Dynamic Trip Page feature (V1, shipping Apr 15 2026).
+//
+// Source of truth: PRD_Dynamic_Trip_Page_Snapshot_Mar9.md + Mar 13 engineering
+//                  decision (Component Comments moved to separate DB).
+//
+// Assumptions:
+//   [A1] Component Comments Database is a separate Notion DB (Mar 13 decision),
+//        NOT inline JSON on Components (Mar 9 PRD had JSON — corrected).
+//   [A2] "travelers" on Trips is a Notion relation to a Members DB that is
+//        outside the scope of this model. Shown as a relation reference only.
+//   [A3] Rollup fields (e.g. Component Comments -> trip) are derived by Notion
+//        and are read-only in the API layer.
+//   [A4] All IDs are Notion page IDs (UUID format strings).
+//   [A5] Multi-select fields are represented as arrays of strings.
+//   [A6] Rich text fields store Notion rich text blocks; the BFF parses them
+//        into structured output (e.g. advisor reasoning bullets, insider tips HTML).
+// =============================================================================
+
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+Enum trip_status {
+  not_started        [note: 'Trip received — advisor not yet assigned']
+  trip_identified    [note: 'Advisor scoping the trip']
+  outline            [note: 'Draft components visible; browse only']
+  itinerary_review   [note: 'Primary action phase — approve/decline enabled']
+  booking_in_progress [note: 'Decisions locked; comments open']
+  booking_complete   [note: 'Finalized view — all booked']
+  on_trip            [note: 'Read-only itinerary']
+  post_trip          [note: 'Feedback modal triggered']
+}
+
+Enum trip_page_type {
+  structured        [note: 'Full interactive dynamic trip page']
+  notion_embedded   [note: 'Legacy static Notion page in webview']
+  custom            [note: 'Pre-planning or custom itinerary — same as Notion Embedded rendering']
+}
+
+Enum component_category {
+  FLIGHT
+  HOTEL
+  EXPERIENCE
+  DINING
+  TRAIN
+  TRANSFER
+  VIP_TOUCH
+}
+
+Enum client_facing_status {
+  working_on_it      [note: 'Researching — view only']
+  need_your_input    [note: 'Needs feedback — comment/questions enabled']
+  ready_for_approval [note: 'Decision enabled — approve/decline/request changes']
+  on_hold            [note: 'Paused — view only']
+  confirmed          [note: 'Final selection — locked']
+  booked             [note: 'Booking complete — locked']
+}
+
+Enum client_decision {
+  pending        [note: 'Default — no action taken']
+  approved       [note: 'Member tapped approve — green checkmark']
+  declined       [note: 'Member tapped decline — card dims']
+  needs_changes  [note: 'Member tapped request changes — comment auto-created']
+}
+
+Enum payment_method {
+  cash
+  points
+  either
+}
+
+Enum comment_type {
+  internal  [note: 'Ops-only — hidden from client']
+  client    [note: 'Posted by member via mobile app']
+  maestro   [note: 'Posted by advisor via Notion or Command Center']
+}
+
+Enum comment_status {
+  new          [note: 'Just submitted — unread dot']
+  in_progress  [note: 'Ops acknowledged — "Reviewing" label']
+  resolved     [note: 'Ops took action — strikethrough + checkmark']
+  wont_do      [note: 'Seen but cannot action — "Noted" label']
+}
+
+
+// ---------------------------------------------------------------------------
+// Tables
+// ---------------------------------------------------------------------------
+
+Table trips {
+  // -- Identity
+  id                         string     [pk, note: 'Notion page ID (UUID)']
+  name                       string     [not null, note: 'Trip name e.g. "Where Winter Glows"']
+
+  // -- Core trip data
+  destinations               "string[]" [note: 'Array of city names — Notion multi-select']
+  start_date                 date       [note: 'Trip start date']
+  end_date                   date       [note: 'Trip end date']
+  status                     trip_status [not null, note: 'Advisor-controlled. Strictly forward progression. See trip_status enum.']
+  status_label               string     [note: 'Client-facing human-readable label. Derived from status — e.g. "Trip Received", "Review Your Options"']
+  trip_page_type             trip_page_type [not null, default: 'structured', note: 'Determines rendering mode. New trips default to Structured. Existing/unrecognized fallback to Notion Embedded.']
+  cover_image_url            string     [note: 'Hero image URL for header and trip list card']
+
+  // -- Travelers (external relation)
+  travelers                  "relation" [note: '[A2] Relation to Members DB (outside this model scope). Circular avatars in Travelers Row.']
+
+  // -- Planning feedback
+  planning_rating            number     [note: '1-5 star rating — submitted via post-planning feedback modal']
+  planning_positive_tags     "string[]" [note: 'Multi-select pills: Fast turnaround, Great options, Good value/deals, Clear communication, Understood my preferences, Attention to detail, Flexible with changes, Smart points strategy']
+  planning_improvement_tags  "string[]" [note: 'Multi-select pills: Too slow, Limited options, Too expensive, Communication gaps, Didnt match my taste, Too many back-and-forths, Needed more guidance, Points werent optimized']
+  planning_feedback_date     date       [note: 'Timestamp when planning feedback was submitted']
+
+  // -- Trip feedback
+  trip_rating                number     [note: '1-5 star rating — submitted via post-trip feedback modal']
+  trip_positive_tags         "string[]" [note: 'Multi-select pills: Amazing accommodations, Incredible dining, Unforgettable experiences, Seamless logistics, Great local tips, Thoughtful VIP touches, Exceeded expectations, Perfect pacing']
+  trip_improvement_tags      "string[]" [note: 'Multi-select pills: Hotel didnt match expectations, Dining was underwhelming, Experiences were disappointing, Logistics were bumpy, Itinerary too packed, Itinerary too sparse, Overpromised/under-delivered, Not worth the cost']
+  trip_feedback_date         date       [note: 'Timestamp when trip feedback was submitted']
+
+  // -- Insider tips (rich text — parsed to HTML by BFF)
+  tips_transportation        rich_text  [note: 'Transportation tips. Empty = category hidden.']
+  tips_money_connectivity    rich_text  [note: 'Money and connectivity tips. Empty = category hidden.']
+  tips_culture_etiquette     rich_text  [note: 'Culture and etiquette tips. Empty = category hidden.']
+  tips_packing_prep          rich_text  [note: 'Packing and prep tips. Empty = category hidden.']
+
+  Note: 'System of record: Notion Trips Database. ~50 active trips in V1. Status is manually set by ops in Notion (not automated for MVP).'
+}
+
+
+Table components {
+  // -- Identity
+  id                          string              [pk, note: 'Notion page ID (UUID)']
+  name                        string              [not null, note: 'Component title e.g. "AUS -> LHR", "Four Seasons Kyoto"']
+
+  // -- Trip relation
+  trip                        string              [not null, ref: > trips.id, note: 'Many-to-one relation to Trips DB']
+
+  // -- Classification
+  category                    component_category  [not null, note: 'FLIGHT, HOTEL, EXPERIENCE, DINING, TRAIN, TRANSFER, VIP_TOUCH']
+
+  // -- Status and decisions
+  client_facing_status        client_facing_status [not null, note: 'Advisor-controlled. Determines what actions are available to the member.']
+  client_decision             client_decision     [not null, default: 'pending', note: 'Member-controlled. Updated via PATCH /decision endpoint.']
+  client_decision_date        date                [note: 'When member made the decision']
+  decided_by                  string              [note: 'Member name who made the decision — relevant for multi-traveler trips']
+
+  // -- Scheduling and ordering
+  date                        date                [note: 'Component date. Null = appears in "To Be Scheduled" section.']
+  key_time                    string              [note: 'Display-only pass-through string e.g. "07:00 AM". No parsing, no sorting, no timezone conversion.']
+  display_order               number              [note: 'Sort order within a day. Lower = higher. Default ordering: flights/trains > hotels > experiences/dining > transfers > VIP touches']
+  option_group                string              [note: 'Groups components for comparison carousel. Same value = same carousel. Null = standalone card.']
+
+  // -- Media
+  image_urls                  text                [note: 'Newline-separated URLs. First = hero. Split by newline, trim whitespace, filter empty. Invalid URLs silently dropped.']
+
+  // -- Advisor content
+  advisor_reasoning           rich_text           [note: '"Why we love this option" — bulleted rich text. Bold start = title, rest = body. Empty = section omitted.']
+
+  // -- Pricing
+  recommended_payment_method  payment_method      [note: 'Cash / Points / Either. Determines which pricing is highlighted.']
+  cash_price                  number              [note: 'Total cash price. Null = not applicable for this payment method.']
+  points_price                number              [note: 'Total points price. Null = not applicable for this payment method.']
+  taxes                       number              [note: 'Taxes and fees amount']
+
+  // -- Links and confirmation
+  website_url                 string              [note: 'Venue or provider website. Opens in in-app browser. Hidden if empty.']
+  conf_number                 string              [note: 'Booking confirmation number. Displayed prominently in finalized view.']
+
+  Note: 'System of record: Notion Components Database. Linked to Trips via Notion relation. One trip has many components.'
+}
+
+
+Table component_comments {
+  // -- Identity
+  id                string          [pk, note: 'Notion page ID (UUID)']
+
+  // -- Comment content
+  comment           string          [not null, note: 'Comment text — stored as Notion page title field']
+
+  // -- Component relation
+  component         string          [not null, ref: > components.id, note: 'Many-to-one relation to Components DB']
+
+  // -- Classification
+  comment_type      comment_type    [not null, note: 'Internal (ops-only, hidden from client) / Client (posted from mobile) / Maestro (posted by advisor)']
+  status            comment_status  [not null, default: 'new', note: 'Ops-controlled lifecycle: New -> In Progress -> Resolved | Wont Do']
+
+  // -- Timestamps
+  created_time      datetime        [not null, note: 'Auto-set by Notion on page creation']
+
+  // -- Rollup
+  trip              "rollup"        [note: '[A3] Derived from Component -> Trip relation chain. Read-only. Allows filtering comments by trip.']
+
+  Note: '[A1] Separate DB per Mar 13 engineering decision. Mar 9 PRD had inline JSON on Components — corrected. Trade-off: additional Notion API calls vs independent queryability.'
+}
+
+
+// ---------------------------------------------------------------------------
+// Relationship summary
+// ---------------------------------------------------------------------------
+// trips          1 --< *  components          (trip field on components)
+// components     1 --< *  component_comments   (component field on component_comments)
+// component_comments  ->  trips               (rollup through component -> trip chain)
+//
+// External (not modelled):
+// trips.travelers  -> Members DB              (Notion relation, outside scope)
+// Task Dashboard   <- auto-created by backend (on approve/decline/comment/feedback actions)

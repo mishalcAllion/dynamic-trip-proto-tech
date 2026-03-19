@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Trip Page — Developer Tech Spec</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui','sans-serif'],mono:['JetBrains Mono','monospace']}}}}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{font-family:'Inter',system-ui,sans-serif;background:#0f0f1a;color:#c8d4e4;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0f0f1a}
+::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:2px}
+code,pre,.code-font{font-family:'JetBrains Mono',monospace}
+.sidebar{position:fixed;left:0;top:0;width:220px;height:100vh;background:#0a0a14;border-right:1px solid #1e1e35;z-index:50;overflow-y:auto;padding:20px 0}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:#252540}
+.sidebar a{display:flex;align-items:center;gap:8px;padding:8px 20px;font-size:13px;color:#6b7280;text-decoration:none;transition:all .15s;border-left:2px solid transparent}
+.sidebar a:hover{color:#c8d4e4;background:rgba(255,255,255,.03)}
+.sidebar a.active{color:#80f0c8;border-left-color:#80f0c8;background:rgba(128,240,200,.05);font-weight:500}
+.main-content{margin-left:220px;padding:32px 48px 120px;max-width:1200px}
+.panel{background:#141425;border:1px solid #1e1e35;border-radius:12px;padding:24px;margin-bottom:16px}
+.panel-sm{background:#141425;border:1px solid #1e1e35;border-radius:10px;padding:16px}
+.code-block{background:#111122;border:1px solid #252540;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;color:#c8d4e4;white-space:pre;tab-size:2;position:relative}
+.code-block .k{color:#93ddff}.code-block .s{color:#98f5b8}.code-block .n{color:#fcc93c}.code-block .b{color:#d4a0ff}.code-block .nl{color:#a8b4c8}.code-block .c{color:#5a6a80;font-style:italic}
+.method-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 10px;border-radius:4px;display:inline-block}
+.method-get{background:#0a5d47;color:#80f0c8}
+.method-patch{background:#8a4010;color:#fcc93c}
+.method-post{background:#25466e;color:#93ddff}
+.copy-btn{position:absolute;top:8px;right:8px;background:#1e1e35;border:1px solid #252540;color:#6b7280;font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .15s;z-index:5}
+.copy-btn:hover{background:#252540;color:#c8d4e4}
+.copy-btn.copied{background:#0a5d47;color:#80f0c8;border-color:#0a5d47}
+.section-title{font-size:24px;font-weight:700;color:#fff;margin-bottom:6px}
+.section-sub{font-size:13px;color:#6b7280;margin-bottom:24px}
+.field-row{display:flex;align-items:baseline;padding:8px 0;border-bottom:1px solid #1a1a30;gap:12px}
+.field-row:last-child{border-bottom:none}
+.field-name{color:#93ddff;font-family:'JetBrains Mono',monospace;font-size:12px;min-width:200px}
+.field-type{color:#d4a0ff;font-family:'JetBrains Mono',monospace;font-size:11px;min-width:120px}
+.field-desc{color:#8892a8;font-size:12px;flex:1}
+.tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600;padding:2px 8px;border-radius:4px}
+.tag-new{background:rgba(128,240,200,.12);color:#80f0c8}
+.tag-required{background:rgba(252,201,60,.12);color:#fcc93c}
+.tag-optional{background:rgba(168,180,200,.1);color:#a8b4c8}
+/* State machine */
+.sm-node{background:#1a1a30;border:2px solid #252540;border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .2s;text-align:center;min-width:120px}
+.sm-node:hover{border-color:#4a4a6a;background:#1e1e38}
+.sm-node.sm-active{border-color:#80f0c8;background:rgba(128,240,200,.08);box-shadow:0 0 20px rgba(128,240,200,.15)}
+.sm-arrow{color:#4a4a6a;font-size:20px;display:flex;align-items:center}
+/* Sequence diagram */
+.seq-step{display:grid;grid-template-columns:100px 1fr 1fr 1fr 1fr;gap:0;padding:10px 12px;border-radius:6px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.seq-step:hover{background:rgba(255,255,255,.02)}
+.seq-step.seq-active{background:rgba(128,240,200,.06);border-color:rgba(128,240,200,.2)}
+.seq-col{font-size:12px;text-align:center;padding:4px 8px;position:relative}
+.seq-actor{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:8px;text-align:center;color:#6b7280}
+/* Try it panel */
+.try-panel{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.try-panel.open{max-height:2000px}
+.spinner{width:20px;height:20px;border:2px solid #252540;border-top-color:#80f0c8;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.slide-in{animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* Architecture boxes */
+.arch-box{background:#141425;border:2px solid #252540;border-radius:12px;padding:20px;cursor:pointer;transition:all .2s;position:relative}
+.arch-box:hover{border-color:#4a4a6a;transform:translateY(-2px)}
+.arch-box.arch-active{border-color:#93ddff;box-shadow:0 0 24px rgba(147,221,255,.12)}
+.arch-arrow{color:#4a4a6a;display:flex;align-items:center;justify-content:center;font-size:28px}
+/* Edge case cards */
+.edge-card{background:#141425;border:1px solid #1e1e35;border-radius:10px;padding:16px;transition:all .15s}
+.edge-card:hover{border-color:#2a2a50}
+/* View matrix */
+.matrix-cell{padding:10px 12px;font-size:12px;border-bottom:1px solid #1a1a30}
+.matrix-header{background:#111122;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;padding:10px 12px;position:sticky;top:0}
+/* Tabs inside sections */
+.err-tab{padding:4px 12px;font-size:11px;border-radius:4px;cursor:pointer;transition:all .15s;color:#6b7280;background:transparent;border:1px solid transparent}
+.err-tab:hover{color:#c8d4e4}
+.err-tab.active{background:#1e1e35;color:#c8d4e4;border-color:#252540}
+.proto-link{display:inline-flex;align-items:center;gap:4px;color:#93ddff;font-size:12px;text-decoration:none;transition:color .15s}
+.proto-link:hover{color:#b8e8ff}
+@media(max-width:900px){.sidebar{display:none}.main-content{margin-left:0;padding:20px}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="px-5 mb-6">
+    <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Dev Spec</div>
+    <div class="text-sm font-semibold text-white leading-tight">Dynamic Trip Page</div>
+    <div class="text-[10px] text-gray-500 mt-1">PRD v8.4 | Apr 15, 2026</div>
+  </div>
+  <div class="mb-3 px-5">
+    <a href="index.html" class="text-[11px] text-gray-500 hover:text-gray-300 flex items-center gap-1.5 px-0 py-1 border-l-0" style="border:0;padding-left:0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back to Prototype
+    </a>
+  </div>
+  <div class="h-px bg-[#1e1e35] mx-5 mb-3"></div>
+  <a href="#architecture" data-section="architecture"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Architecture</a>
+  <a href="#databases" data-section="databases"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Databases</a>
+  <a href="#api-reference" data-section="api-reference"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><line x1="12" y1="19" x2="20" y2="19"/></svg>API Reference</a>
+  <a href="#state-machines" data-section="state-machines"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m8.5-14.5l-4.2 4.2m-8.6 0L3.5 4.5m17 15l-4.2-4.2m-8.6 0L3.5 19.5"/></svg>State Machines</a>
+  <a href="#sequences" data-section="sequences"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/><polyline points="6 9 18 14"/></svg>Sequences</a>
+  <a href="#view-logic" data-section="view-logic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>View Logic</a>
+  <a href="#edge-cases" data-section="edge-cases"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Edge Cases</a>
+  <a href="#performance" data-section="performance"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Performance</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main-content" id="main-content">
+
+<!-- HEADER -->
+<div class="mb-10" id="page-top">
+  <div class="flex items-center gap-3 mb-2">
+    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+    <span class="text-[11px] font-semibold uppercase tracking-widest text-emerald-400">Active Development</span>
+  </div>
+  <h1 class="text-4xl font-extrabold text-white mb-2">Dynamic Trip Page</h1>
+  <p class="text-lg text-gray-400 mb-1">Developer Tech Spec</p>
+  <p class="text-sm text-gray-500">PRD v8.4 &middot; Interactive API Reference &middot; Ship Date: April 15, 2026</p>
+  <div class="flex gap-3 mt-4 flex-wrap">
+    <span class="tag tag-new">7 Endpoints</span>
+    <span class="tag" style="background:rgba(147,221,255,.12);color:#93ddff">3 Databases</span>
+    <span class="tag" style="background:rgba(212,160,255,.12);color:#d4a0ff">4 State Machines</span>
+    <span class="tag" style="background:rgba(252,201,60,.12);color:#fcc93c">12 Edge Cases</span>
+  </div>
+</div>
+
+<!-- ===================== SECTION 1: ARCHITECTURE ===================== -->
+<section id="architecture" class="mb-16">
+  <h2 class="section-title">Architecture</h2>
+  <p class="section-sub">System architecture overview — click each component for details</p>
+
+  <div class="grid grid-cols-4 gap-4 items-center mb-6" id="arch-diagram">
+    <div class="arch-box" onclick="showArchDetail(0)">
+      <div class="text-center">
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Client</div>
+        <div class="text-sm font-semibold text-white mb-3">Mobile App</div>
+        <div class="space-y-1 text-[11px] text-gray-400">
+          <div>React Native</div>
+          <div>60s polling</div>
+          <div>Pull-to-refresh</div>
+          <div>Offline queue</div>
+        </div>
+      </div>
+    </div>
+    <div class="arch-box" onclick="showArchDetail(1)">
+      <div class="text-center">
+        <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Backend</div>
+        <div class="text-sm font-semibold text-white mb-3">BFF API</div>
+        <div class="space-y-1 text-[11px] text-gray-400">
+          <div>Node.js</div>
+          <div>Write Queue 2 req/s</div>
+          <div>JWT Auth</div>
+          <div>V1.5: Redis cache</div>
+        </div>
+      </div>
+    </div>
+    <div class="arch-box" onclick="showArchDetail(2)">
+      <div class="text-center">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Integration</div>
+        <div class="text-sm font-semibold text-white mb-3">Notion API</div>
+        <div class="space-y-1 text-[11px] text-gray-400">
+          <div>3 req/sec limit</div>
+          <div>429 backoff</div>
+          <div>Rate-limited</div>
+        </div>
+      </div>
+    </div>
+    <div class="arch-box" onclick="showArchDetail(3)">
+      <div class="text-center">
+        <div class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Storage</div>
+        <div class="text-sm font-semibold text-white mb-3">Notion DBs</div>
+        <div class="space-y-1 text-[11px] text-gray-400">
+          <div>Trips</div>
+          <div>Components</div>
+          <div>Comments</div>
+          <div>Tasks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrows overlay row -->
+  <div class="grid grid-cols-4 gap-4 -mt-4 mb-6 pointer-events-none">
+    <div></div>
+    <div class="flex justify-between px-2 text-[10px] text-gray-500">
+      <span>&larr; JSON response</span>
+      <span>REST &rarr;</span>
+    </div>
+    <div class="flex justify-between px-2 text-[10px] text-gray-500">
+      <span>&larr; Response</span>
+      <span>Query &rarr;</span>
+    </div>
+    <div></div>
+  </div>
+
+  <!-- Architecture detail panel -->
+  <div id="arch-detail" class="panel hidden">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold text-white" id="arch-detail-title"></h3>
+      <button onclick="document.getElementById('arch-detail').classList.add('hidden')" class="text-gray-500 hover:text-gray-300 text-xs">Close</button>
+    </div>
+    <div id="arch-detail-content" class="text-sm text-gray-400"></div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 2: DATABASES ===================== -->
+<section id="databases" class="mb-16">
+  <h2 class="section-title">Databases</h2>
+  <p class="section-sub">3 Notion database schemas — new fields marked in green</p>
+
+  <!-- DB Tabs -->
+  <div class="flex gap-2 mb-4">
+    <button onclick="showDbTab(0)" class="err-tab active" id="db-tab-0">Trips Database</button>
+    <button onclick="showDbTab(1)" class="err-tab" id="db-tab-1">Components Database</button>
+    <button onclick="showDbTab(2)" class="err-tab" id="db-tab-2">Component Comments</button>
+  </div>
+
+  <!-- Trips DB -->
+  <div class="panel" id="db-panel-0">
+    <div class="flex items-center gap-2 mb-4">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#80f0c8" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      <span class="text-sm font-semibold text-white">Trips Database</span>
+      <span class="tag tag-new ml-2">16 New Fields</span>
+    </div>
+    <div class="field-row"><span class="field-name">Trip Page Type</span><span class="field-type">Select</span><span class="field-desc">Structured / Notion Embedded / Custom</span></div>
+    <div class="field-row"><span class="field-name">Planning Rating</span><span class="field-type">Number</span><span class="field-desc">1-5 stars</span></div>
+    <div class="field-row"><span class="field-name">Planning Positive Tags</span><span class="field-type">Multi-select</span><span class="field-desc">Fast turnaround, Great options, Good value/deals, Clear communication, Understood my preferences, Attention to detail, Flexible with changes, Smart points strategy</span></div>
+    <div class="field-row"><span class="field-name">Planning Improvement Tags</span><span class="field-type">Multi-select</span><span class="field-desc">Too slow, Limited options, Too expensive, Communication gaps, Didn't match my taste, Too many back-and-forths, Needed more guidance, Points weren't optimized</span></div>
+    <div class="field-row"><span class="field-name">Planning Feedback Date</span><span class="field-type">Date</span><span class="field-desc">When planning feedback was submitted</span></div>
+    <div class="field-row"><span class="field-name">Trip Rating</span><span class="field-type">Number</span><span class="field-desc">1-5 stars</span></div>
+    <div class="field-row"><span class="field-name">Trip Positive Tags</span><span class="field-type">Multi-select</span><span class="field-desc">Amazing accommodations, Incredible dining, Unforgettable experiences, Seamless logistics, Great local tips, Thoughtful VIP touches, Exceeded expectations, Perfect pacing</span></div>
+    <div class="field-row"><span class="field-name">Trip Improvement Tags</span><span class="field-type">Multi-select</span><span class="field-desc">Hotel didn't match expectations, Dining was underwhelming, Experiences were disappointing, Logistics were bumpy, Itinerary too packed, Itinerary too sparse, Overpromised/under-delivered, Not worth the cost</span></div>
+    <div class="field-row"><span class="field-name">Trip Feedback Date</span><span class="field-type">Date</span><span class="field-desc">When trip feedback was submitted</span></div>
+    <div class="field-row"><span class="field-name">Cover Image URL</span><span class="field-type">URL</span><span class="field-desc">Hero image for trip page header</span></div>
+    <div class="field-row"><span class="field-name">Tips: Transportation</span><span class="field-type">Rich text</span><span class="field-desc">Local transport guidance</span></div>
+    <div class="field-row"><span class="field-name">Tips: Money &amp; Connectivity</span><span class="field-type">Rich text</span><span class="field-desc">Currency, cards, WiFi tips</span></div>
+    <div class="field-row"><span class="field-name">Tips: Culture &amp; Etiquette</span><span class="field-type">Rich text</span><span class="field-desc">Cultural norms for destination</span></div>
+    <div class="field-row"><span class="field-name">Tips: Packing &amp; Prep</span><span class="field-type">Rich text</span><span class="field-desc">What to pack, weather notes</span></div>
+  </div>
+
+  <!-- Components DB -->
+  <div class="panel hidden" id="db-panel-1">
+    <div class="flex items-center gap-2 mb-4">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93ddff" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      <span class="text-sm font-semibold text-white">Components Database</span>
+      <span class="tag" style="background:rgba(147,221,255,.12);color:#93ddff">13 New Fields</span>
+    </div>
+    <div class="field-row"><span class="field-name">Image URLs</span><span class="field-type">Text</span><span class="field-desc">Newline-separated image URLs for carousel</span></div>
+    <div class="field-row"><span class="field-name">Advisor Reasoning</span><span class="field-type">Rich text</span><span class="field-desc">Why the advisor recommends this option</span></div>
+    <div class="field-row"><span class="field-name">Recommended Payment Method</span><span class="field-type">Select</span><span class="field-desc">Cash / Points / Either</span></div>
+    <div class="field-row"><span class="field-name">Display Order</span><span class="field-type">Number</span><span class="field-desc">Sort order within day group</span></div>
+    <div class="field-row"><span class="field-name">Option Group</span><span class="field-type">Text</span><span class="field-desc">Groups mutually-exclusive options</span></div>
+    <div class="field-row"><span class="field-name">Client Decision</span><span class="field-type">Select</span><span class="field-desc">Pending / Approved / Declined / Needs Changes</span></div>
+    <div class="field-row"><span class="field-name">Client Decision Date</span><span class="field-type">Date</span><span class="field-desc">When the member last changed their decision</span></div>
+    <div class="field-row"><span class="field-name">Decided By</span><span class="field-type">Text</span><span class="field-desc">Member name who made the decision</span></div>
+    <div class="field-row"><span class="field-name">Key Time</span><span class="field-type">Text</span><span class="field-desc">Check-in, departure, or event time</span></div>
+    <div class="field-row"><span class="field-name">Website URL</span><span class="field-type">URL</span><span class="field-desc">Link to venue/airline/hotel website</span></div>
+    <div class="field-row"><span class="field-name">Client-Facing Status</span><span class="field-type">Select</span><span class="field-desc">Working on it / Need your input / Ready for approval / On hold / Confirmed / Booked</span></div>
+    <div class="field-row"><span class="field-name">Conf Number</span><span class="field-type">Text</span><span class="field-desc">Confirmation/booking reference number</span></div>
+  </div>
+
+  <!-- Comments DB -->
+  <div class="panel hidden" id="db-panel-2">
+    <div class="flex items-center gap-2 mb-4">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4a0ff" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      <span class="text-sm font-semibold text-white">Component Comments Database</span>
+      <span class="tag" style="background:rgba(212,160,255,.12);color:#d4a0ff">New Database</span>
+    </div>
+    <div class="field-row"><span class="field-name">Comment</span><span class="field-type">Title</span><span class="field-desc">Comment text content</span></div>
+    <div class="field-row"><span class="field-name">Component</span><span class="field-type">Relation</span><span class="field-desc">Links to Components DB</span></div>
+    <div class="field-row"><span class="field-name">Comment Type</span><span class="field-type">Select</span><span class="field-desc">Internal / Client / Maestro</span></div>
+    <div class="field-row"><span class="field-name">Status</span><span class="field-type">Select</span><span class="field-desc">New / In Progress / Resolved / Won't Do</span></div>
+    <div class="field-row"><span class="field-name">Created Time</span><span class="field-type">Auto</span><span class="field-desc">Automatically set on creation</span></div>
+    <div class="field-row"><span class="field-name">Trip</span><span class="field-type">Rollup</span><span class="field-desc">Rollup from Component relation to Trip</span></div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 3: API REFERENCE ===================== -->
+<section id="api-reference" class="mb-16">
+  <h2 class="section-title">API Reference</h2>
+  <p class="section-sub">7 endpoints with interactive playground — click "Try it" to see mock responses</p>
+
+  <div id="api-endpoints" class="space-y-4">
+    <!-- Endpoints rendered by JS -->
+  </div>
+</section>
+
+<!-- ===================== SECTION 4: STATE MACHINES ===================== -->
+<section id="state-machines" class="mb-16">
+  <h2 class="section-title">State Machines</h2>
+  <p class="section-sub">4 state machines — click any state to see its transitions and effects</p>
+
+  <!-- SM Tabs -->
+  <div class="flex gap-2 mb-4 flex-wrap">
+    <button onclick="showSmTab(0)" class="err-tab active" id="sm-tab-0">Trip Status</button>
+    <button onclick="showSmTab(1)" class="err-tab" id="sm-tab-1">Client-Facing Status</button>
+    <button onclick="showSmTab(2)" class="err-tab" id="sm-tab-2">Client Decision</button>
+    <button onclick="showSmTab(3)" class="err-tab" id="sm-tab-3">Comment Status</button>
+  </div>
+
+  <div id="sm-container" class="panel" style="min-height:200px">
+    <!-- Rendered by JS -->
+  </div>
+  <div id="sm-detail" class="panel hidden mt-4">
+    <div class="flex items-center justify-between mb-2">
+      <h4 class="text-sm font-semibold text-white" id="sm-detail-title"></h4>
+      <button onclick="document.getElementById('sm-detail').classList.add('hidden')" class="text-gray-500 hover:text-gray-300 text-xs">Close</button>
+    </div>
+    <div id="sm-detail-content" class="text-sm text-gray-400"></div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 5: SEQUENCES ===================== -->
+<section id="sequences" class="mb-16">
+  <h2 class="section-title">Sequence Diagrams</h2>
+  <p class="section-sub">4 step-through flows — use Next/Prev or arrow keys to navigate</p>
+
+  <div class="flex gap-2 mb-4 flex-wrap">
+    <button onclick="showSeqTab(0)" class="err-tab active" id="seq-tab-0">Trip Page Load</button>
+    <button onclick="showSeqTab(1)" class="err-tab" id="seq-tab-1">Approve Component</button>
+    <button onclick="showSeqTab(2)" class="err-tab" id="seq-tab-2">Post Comment</button>
+    <button onclick="showSeqTab(3)" class="err-tab" id="seq-tab-3">Submit Feedback</button>
+  </div>
+
+  <div class="panel" id="seq-container" style="overflow-x:auto">
+    <!-- Rendered by JS -->
+  </div>
+
+  <div class="flex items-center gap-3 mt-4">
+    <button onclick="seqPrev()" class="px-4 py-2 bg-[#1e1e35] text-gray-300 text-xs font-medium rounded-lg hover:bg-[#252540] transition-colors" id="seq-prev-btn">&larr; Prev</button>
+    <button onclick="seqNext()" class="px-4 py-2 bg-[#1e1e35] text-gray-300 text-xs font-medium rounded-lg hover:bg-[#252540] transition-colors" id="seq-next-btn">Next &rarr;</button>
+    <button onclick="seqPlayAll()" class="px-4 py-2 bg-[#0a5d47] text-emerald-200 text-xs font-medium rounded-lg hover:bg-[#0c6b52] transition-colors" id="seq-play-btn">Play All</button>
+    <span class="text-xs text-gray-500 ml-2" id="seq-step-counter">Step 0 / 0</span>
+  </div>
+
+  <div id="seq-detail" class="panel-sm mt-4 hidden">
+    <div id="seq-detail-content"></div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 6: VIEW LOGIC ===================== -->
+<section id="view-logic" class="mb-16">
+  <h2 class="section-title">View Logic</h2>
+  <p class="section-sub">Phase-dependent view matrix — what is visible, hidden, and interactive at each trip phase</p>
+
+  <div class="panel" style="overflow-x:auto;padding:0">
+    <table class="w-full text-left" style="min-width:900px">
+      <thead>
+        <tr>
+          <th class="matrix-header" style="width:180px">Phase</th>
+          <th class="matrix-header">Visible</th>
+          <th class="matrix-header">Hidden</th>
+          <th class="matrix-header">Interactive</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="matrix-cell text-xs text-white font-medium">Not Started / Trip Identified</td><td class="matrix-cell text-xs">Status, summary, placeholder</td><td class="matrix-cell text-xs">At a Glance, itinerary, components, comments, feedback, tips</td><td class="matrix-cell text-xs text-gray-500">None</td></tr>
+        <tr><td class="matrix-cell text-xs text-white font-medium">Outline</td><td class="matrix-cell text-xs">Status, summary, At a Glance (draft), day-by-day (view-only), tips</td><td class="matrix-cell text-xs">Approve/decline buttons</td><td class="matrix-cell text-xs">View only</td></tr>
+        <tr><td class="matrix-cell text-xs text-white font-medium">Itinerary Review</td><td class="matrix-cell text-xs" style="color:#80f0c8">ALL sections with actions and tips</td><td class="matrix-cell text-xs text-gray-500">Nothing</td><td class="matrix-cell text-xs" style="color:#80f0c8">Approve, Decline, Request Changes, Comments</td></tr>
+        <tr><td class="matrix-cell text-xs text-white font-medium">Booking In Progress</td><td class="matrix-cell text-xs">Status, At a Glance, itinerary (decisions locked, comments open), tips</td><td class="matrix-cell text-xs">Approve/decline buttons</td><td class="matrix-cell text-xs">Comments only</td></tr>
+        <tr><td class="matrix-cell text-xs text-white font-medium">Booking Complete / On Trip</td><td class="matrix-cell text-xs">Finalized: At a Glance + conf numbers, confirmed components, tips</td><td class="matrix-cell text-xs">Option groups, declined cards, approve/decline</td><td class="matrix-cell text-xs">View only, post-booking comments</td></tr>
+        <tr><td class="matrix-cell text-xs text-white font-medium">Post Trip</td><td class="matrix-cell text-xs">Finalized view + tips + feedback modal on first visit</td><td class="matrix-cell text-xs text-gray-500">Nothing</td><td class="matrix-cell text-xs">Feedback modal</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4">
+    <a href="index.html" class="proto-link">See all phases in the prototype <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg></a>
+  </div>
+</section>
+
+<!-- ===================== SECTION 7: EDGE CASES ===================== -->
+<section id="edge-cases" class="mb-16">
+  <h2 class="section-title">Edge Cases</h2>
+  <p class="section-sub">12 documented edge cases with handling strategies</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="edge-cases-grid">
+    <!-- Rendered by JS -->
+  </div>
+</section>
+
+<!-- ===================== SECTION 8: PERFORMANCE ===================== -->
+<section id="performance" class="mb-16">
+  <h2 class="section-title">Performance</h2>
+  <p class="section-sub">Performance targets and offline caching strategy</p>
+
+  <div class="panel mb-4">
+    <h3 class="text-sm font-semibold text-white mb-4">Performance Targets</h3>
+    <div class="space-y-3">
+      <div class="flex items-center justify-between py-2 border-b border-[#1a1a30]">
+        <span class="text-sm text-gray-300">Trip page initial load (4G)</span>
+        <span class="text-sm font-mono font-semibold text-emerald-400">&lt; 2 sec (P95)</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-[#1a1a30]">
+        <span class="text-sm text-gray-300">Component detail fetch</span>
+        <span class="text-sm font-mono font-semibold text-emerald-400">&lt; 500ms (P95)</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-[#1a1a30]">
+        <span class="text-sm text-gray-300">Decision PATCH response</span>
+        <span class="text-sm font-mono font-semibold text-emerald-400">&lt; 1 sec (P95)</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-[#1a1a30]">
+        <span class="text-sm text-gray-300">Comment POST response</span>
+        <span class="text-sm font-mono font-semibold text-emerald-400">&lt; 1 sec (P95)</span>
+      </div>
+      <div class="flex items-center justify-between py-2">
+        <span class="text-sm text-gray-300">Image carousel first load (4G)</span>
+        <span class="text-sm font-mono font-semibold text-emerald-400">&lt; 1 sec (P95)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel mb-4">
+    <h3 class="text-sm font-semibold text-white mb-4">Offline Caching Strategy</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="panel-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Pre-cache Trigger</div>
+        <p class="text-xs text-gray-400">Full trip data pre-cached when status reaches <span class="text-white font-medium">Booking Complete</span></p>
+      </div>
+      <div class="panel-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Storage Limits</div>
+        <p class="text-xs text-gray-400">~50MB per trip, 200MB total device cap</p>
+      </div>
+      <div class="panel-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Offline Indicator</div>
+        <p class="text-xs text-gray-400">Warm gray banner + queued actions counter badge</p>
+      </div>
+      <div class="panel-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Conflict Resolution</div>
+        <p class="text-xs text-gray-400">Server-wins on reconnect. Queued actions replayed in order.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 class="text-sm font-semibold text-white mb-4">Polling Strategy</h3>
+    <div class="flex gap-4">
+      <div class="flex-1 panel-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">V1 (Ship)</div>
+        <p class="text-xs text-gray-400">60-second polling interval + pull-to-refresh</p>
+      </div>
+      <div class="flex-1 panel-sm">
+        <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">V1.5 (Follow-up)</div>
+        <p class="text-xs text-gray-400">SSE (Server-Sent Events) with 5-minute polling fallback</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end main-content -->
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+// ============================================================
+// ARCHITECTURE DETAILS
+// ============================================================
+const archDetails = [
+  {
+    title: 'Mobile App (React Native)',
+    content: `<div class="space-y-3">
+      <div class="code-block"><span class="c">// Polling configuration</span>
+<span class="k">"polling_interval"</span>: <span class="n">60000</span>,   <span class="c">// 60s default</span>
+<span class="k">"pull_to_refresh"</span>: <span class="b">true</span>,
+<span class="k">"offline_queue"</span>: <span class="b">true</span>,
+<span class="k">"pre_cache_at"</span>: <span class="s">"Booking Complete"</span>,
+<span class="k">"max_cache_mb"</span>: <span class="n">200</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p class="text-xs text-gray-400">The mobile app uses 60-second polling to check for trip updates. When offline, actions are queued locally and replayed on reconnect using server-wins conflict resolution. Full trip data is pre-cached when status reaches Booking Complete (~50MB per trip).</p>
+    </div>`
+  },
+  {
+    title: 'BFF API (Node.js)',
+    content: `<div class="space-y-3">
+      <div class="code-block"><span class="c">// Rate limiting config</span>
+<span class="k">"write_queue_rate"</span>: <span class="s">"2 req/sec"</span>,
+<span class="k">"notion_proxy_rate"</span>: <span class="s">"3 req/sec"</span>,
+<span class="k">"auth"</span>: <span class="s">"Bearer JWT"</span>,
+<span class="k">"idempotency"</span>: <span class="b">true</span>,
+<span class="k">"v1_5_cache"</span>: <span class="s">"Redis"</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p class="text-xs text-gray-400">The BFF layer handles JWT authentication, maps member_id to notion_user_id, and enforces a write queue at 2 req/sec to stay within Notion API limits. All write endpoints support idempotency keys. V1.5 will add a Redis read cache layer.</p>
+    </div>`
+  },
+  {
+    title: 'Notion API (Integration)',
+    content: `<div class="space-y-3">
+      <div class="code-block"><span class="c">// Notion API constraints</span>
+<span class="k">"rate_limit"</span>: <span class="s">"3 requests/second"</span>,
+<span class="k">"backoff_on_429"</span>: <span class="b">true</span>,
+<span class="k">"retry_strategy"</span>: <span class="s">"exponential"</span>,
+<span class="k">"max_retries"</span>: <span class="n">3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p class="text-xs text-gray-400">V1 reads directly from Notion API. The 3 req/sec rate limit is the primary constraint — the BFF write queue throttles to 2 req/sec to leave headroom for reads. On 429 responses, the BFF uses exponential backoff and shows a "Saving..." indicator to the client.</p>
+    </div>`
+  },
+  {
+    title: 'Notion Databases (Storage)',
+    content: `<div class="space-y-3">
+      <div class="code-block"><span class="c">// 3 databases + 1 task dashboard</span>
+<span class="k">"databases"</span>: [
+  <span class="s">"Trips"</span>,        <span class="c">// 16 new fields</span>
+  <span class="s">"Components"</span>,   <span class="c">// 13 new fields</span>
+  <span class="s">"Comments"</span>      <span class="c">// NEW database</span>
+],
+<span class="k">"task_auto_create"</span>: <span class="b">true</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <p class="text-xs text-gray-400">Three databases serve the Dynamic Trip Page. Decisions and comments automatically create tasks in the Notion Task Dashboard for ops team visibility. The Comments database is entirely new — not an extension of existing tables.</p>
+    </div>`
+  }
+];
+
+function showArchDetail(idx) {
+  document.querySelectorAll('.arch-box').forEach((b,i) => b.classList.toggle('arch-active', i===idx));
+  const d = document.getElementById('arch-detail');
+  document.getElementById('arch-detail-title').textContent = archDetails[idx].title;
+  document.getElementById('arch-detail-content').innerHTML = archDetails[idx].content;
+  d.classList.remove('hidden');
+}
+
+// ============================================================
+// DATABASE TABS
+// ============================================================
+function showDbTab(idx) {
+  for(let i=0;i<3;i++){
+    document.getElementById('db-tab-'+i).classList.toggle('active',i===idx);
+    document.getElementById('db-panel-'+i).classList.toggle('hidden',i!==idx);
+  }
+}
+
+// ============================================================
+// COPY CODE
+// ============================================================
+function copyCode(btn) {
+  const block = btn.closest('.code-block');
+  const text = block.textContent.replace('Copy','').replace('Copied!','').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},1500);
+  });
+}
+
+// ============================================================
+// API ENDPOINTS DATA + RENDER
+// ============================================================
+const endpoints = [
+  {
+    method:'GET', path:'/trips/:id', title:'Get Trip Detail',
+    desc:'Trip metadata + components + comment counts + tips',
+    auth:'Bearer {member_jwt}, X-Request-ID: {uuid}',
+    notes:'member_id mapped to notion_user_id. Returns 403 if not in Members relation. V1 reads directly from Notion API (3 req/sec limit).',
+    protoLink:'index.html?status=3',
+    request:null,
+    response:`{
+  <span class="k">"id"</span>: <span class="s">"trip_abc123"</span>,
+  <span class="k">"title"</span>: <span class="s">"Where Winter Glows"</span>,
+  <span class="k">"subtitle"</span>: <span class="s">"London &amp; Paris"</span>,
+  <span class="k">"start_date"</span>: <span class="s">"2026-11-30"</span>,
+  <span class="k">"end_date"</span>: <span class="s">"2026-12-09"</span>,
+  <span class="k">"status"</span>: <span class="s">"Itinerary Review"</span>,
+  <span class="k">"status_label"</span>: <span class="s">"Review Your Options"</span>,
+  <span class="k">"trip_page_type"</span>: <span class="s">"Structured"</span>,
+  <span class="k">"cover_image_url"</span>: <span class="s">"https://images.unsplash.com/london-winter.jpg"</span>,
+  <span class="k">"travelers"</span>: [<span class="s">"John D."</span>, <span class="s">"Susan U."</span>, <span class="s">"Maria K."</span>],
+  <span class="k">"components"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"comp_flight_01"</span>,
+      <span class="k">"type"</span>: <span class="s">"Flight"</span>,
+      <span class="k">"name"</span>: <span class="s">"AUS to LHR — BA UA400"</span>,
+      <span class="k">"date"</span>: <span class="s">"2026-11-30"</span>,
+      <span class="k">"key_time"</span>: <span class="s">"7:45 AM"</span>,
+      <span class="k">"client_facing_status"</span>: <span class="s">"Ready for approval"</span>,
+      <span class="k">"client_decision"</span>: <span class="s">"Pending"</span>,
+      <span class="k">"comment_count"</span>: <span class="n">2</span>,
+      <span class="k">"display_order"</span>: <span class="n">1</span>
+    }
+  ],
+  <span class="k">"tips"</span>: {
+    <span class="k">"transportation"</span>: <span class="s">"Use Oyster card for the Tube..."</span>,
+    <span class="k">"money_connectivity"</span>: <span class="s">"GBP and EUR accepted..."</span>,
+    <span class="k">"culture_etiquette"</span>: <span class="s">"Tipping 10-15% at restaurants..."</span>,
+    <span class="k">"packing_prep"</span>: <span class="s">"Pack warm layers, umbrella essential..."</span>
+  }
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Member not found in trip Members relation"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"Trip trip_abc123 does not exist"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  },
+  {
+    method:'GET', path:'/trips', title:'List Trips',
+    desc:'Trip list for authenticated member, sorted by start_date desc',
+    auth:'Bearer {member_jwt}',
+    notes:'Includes trip_page_type field for routing between Structured, Notion Embedded, and Custom pages.',
+    protoLink:null,
+    request:null,
+    response:`{
+  <span class="k">"trips"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"trip_abc123"</span>,
+      <span class="k">"title"</span>: <span class="s">"Where Winter Glows"</span>,
+      <span class="k">"subtitle"</span>: <span class="s">"London &amp; Paris"</span>,
+      <span class="k">"start_date"</span>: <span class="s">"2026-11-30"</span>,
+      <span class="k">"end_date"</span>: <span class="s">"2026-12-09"</span>,
+      <span class="k">"status"</span>: <span class="s">"Itinerary Review"</span>,
+      <span class="k">"trip_page_type"</span>: <span class="s">"Structured"</span>,
+      <span class="k">"cover_image_url"</span>: <span class="s">"https://images.unsplash.com/london-winter.jpg"</span>
+    }
+  ],
+  <span class="k">"total"</span>: <span class="n">1</span>
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Access denied"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"No trips found"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  },
+  {
+    method:'GET', path:'/trips/:id/components/:componentId', title:'Get Component Detail',
+    desc:'Full component detail with images, reasoning, and pricing. Target: <500ms P95.',
+    auth:'Bearer {member_jwt}',
+    notes:'Returns image URLs, advisor reasoning, pricing breakdown. Images are newline-separated URLs.',
+    protoLink:'index.html?status=3',
+    request:null,
+    response:`{
+  <span class="k">"id"</span>: <span class="s">"comp_hotel_01"</span>,
+  <span class="k">"type"</span>: <span class="s">"Hotel"</span>,
+  <span class="k">"name"</span>: <span class="s">"Corinthia London"</span>,
+  <span class="k">"date"</span>: <span class="s">"2026-11-30"</span>,
+  <span class="k">"key_time"</span>: <span class="s">"3:00 PM check-in"</span>,
+  <span class="k">"image_urls"</span>: [
+    <span class="s">"https://images.unsplash.com/corinthia-1.jpg"</span>,
+    <span class="s">"https://images.unsplash.com/corinthia-2.jpg"</span>,
+    <span class="s">"https://images.unsplash.com/corinthia-3.jpg"</span>
+  ],
+  <span class="k">"advisor_reasoning"</span>: <span class="s">"The Corinthia offers an unmatched central London location with world-class service. The penthouses have stunning Thames views perfect for the winter season."</span>,
+  <span class="k">"recommended_payment"</span>: <span class="s">"Points"</span>,
+  <span class="k">"pricing"</span>: { <span class="k">"points"</span>: <span class="n">95000</span>, <span class="k">"per"</span>: <span class="s">"night"</span> },
+  <span class="k">"client_facing_status"</span>: <span class="s">"Ready for approval"</span>,
+  <span class="k">"client_decision"</span>: <span class="s">"Pending"</span>,
+  <span class="k">"option_group"</span>: <span class="s">"London Hotels"</span>,
+  <span class="k">"display_order"</span>: <span class="n">2</span>,
+  <span class="k">"website_url"</span>: <span class="s">"https://www.corinthia.com/london"</span>,
+  <span class="k">"comment_count"</span>: <span class="n">3</span>
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Member not authorized for this trip"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"Component comp_hotel_01 not found"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  },
+  {
+    method:'GET', path:'/trips/:id/components/:componentId/comments', title:'Get Comments',
+    desc:'All comments chronological, filtered. Client and Maestro types visible. Internal hidden.',
+    auth:'Bearer {member_jwt}',
+    notes:'Toggle "All comments" / "Open only". Internal comments are never returned to the client.',
+    protoLink:'index.html?status=3',
+    request:null,
+    response:`{
+  <span class="k">"comments"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"cmt_001"</span>,
+      <span class="k">"comment"</span>: <span class="s">"Can we get a room with a Thames view?"</span>,
+      <span class="k">"comment_type"</span>: <span class="s">"Client"</span>,
+      <span class="k">"status"</span>: <span class="s">"Resolved"</span>,
+      <span class="k">"created_time"</span>: <span class="s">"2026-11-15T10:30:00Z"</span>,
+      <span class="k">"author"</span>: <span class="s">"John D."</span>
+    },
+    {
+      <span class="k">"id"</span>: <span class="s">"cmt_002"</span>,
+      <span class="k">"comment"</span>: <span class="s">"Absolutely! I've noted the Thames-view penthouse suite as your preference."</span>,
+      <span class="k">"comment_type"</span>: <span class="s">"Maestro"</span>,
+      <span class="k">"status"</span>: <span class="s">"Resolved"</span>,
+      <span class="k">"created_time"</span>: <span class="s">"2026-11-15T11:45:00Z"</span>,
+      <span class="k">"author"</span>: <span class="s">"Advisor Sarah"</span>
+    }
+  ],
+  <span class="k">"total"</span>: <span class="n">2</span>
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Access denied"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"Component not found"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  },
+  {
+    method:'PATCH', path:'/trips/:id/components/:componentId/decision', title:'Update Decision',
+    desc:'Update Client Decision. Idempotent. Auto-creates task in Notion. Target: <1 sec P95.',
+    auth:'Bearer {member_jwt}, Content-Type: application/json',
+    notes:'Idempotency-Key: {member}:{component}:decision:{value}. Auto-creates task in Notion Task Dashboard.',
+    protoLink:'index.html?status=3',
+    request:`{
+  <span class="k">"decision"</span>: <span class="s">"Approved"</span>,
+  <span class="k">"comment"</span>: <span class="s">"Love the Thames view option!"</span>
+}`,
+    response:`{
+  <span class="k">"id"</span>: <span class="s">"comp_hotel_01"</span>,
+  <span class="k">"client_decision"</span>: <span class="s">"Approved"</span>,
+  <span class="k">"client_decision_date"</span>: <span class="s">"2026-11-20T14:30:00Z"</span>,
+  <span class="k">"decided_by"</span>: <span class="s">"John D."</span>,
+  <span class="k">"task_created"</span>: <span class="b">true</span>,
+  <span class="k">"task_title"</span>: <span class="s">"Corinthia London — Approved by John D."</span>
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Decisions only allowed during Itinerary Review"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"Component not found"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  },
+  {
+    method:'POST', path:'/trips/:id/components/:componentId/comments', title:'Create Comment',
+    desc:'Create comment. Idempotent. Auto-creates task for advisor. Target: <1 sec P95.',
+    auth:'Bearer {member_jwt}, Content-Type: application/json',
+    notes:'Idempotency-Key: {member}:{component}:comment:{hash}:{5min_bucket}. Auto-creates task: "[Component Name] -- New comment from [Member Name]"',
+    protoLink:'index.html?status=3',
+    request:`{
+  <span class="k">"comment"</span>: <span class="s">"Is late check-in possible? We arrive around 11 PM."</span>,
+  <span class="k">"comment_type"</span>: <span class="s">"Client"</span>
+}`,
+    response:`{
+  <span class="k">"id"</span>: <span class="s">"cmt_003"</span>,
+  <span class="k">"comment"</span>: <span class="s">"Is late check-in possible? We arrive around 11 PM."</span>,
+  <span class="k">"comment_type"</span>: <span class="s">"Client"</span>,
+  <span class="k">"status"</span>: <span class="s">"New"</span>,
+  <span class="k">"created_time"</span>: <span class="s">"2026-11-20T15:00:00Z"</span>,
+  <span class="k">"task_created"</span>: <span class="b">true</span>,
+  <span class="k">"task_title"</span>: <span class="s">"Corinthia London — New comment from John D."</span>
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Access denied"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"Component not found"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  },
+  {
+    method:'PATCH', path:'/trips/:id/feedback', title:'Submit Feedback',
+    desc:'Submit planning or trip feedback. Idempotent.',
+    auth:'Bearer {member_jwt}, Content-Type: application/json',
+    notes:'Idempotency-Key: {member}:{trip}:feedback:{type}. Writes rating, tags, and date to Trips DB.',
+    protoLink:'index.html?status=7',
+    request:`{
+  <span class="k">"type"</span>: <span class="s">"trip"</span>,
+  <span class="k">"rating"</span>: <span class="n">5</span>,
+  <span class="k">"positive_tags"</span>: [
+    <span class="s">"Amazing accommodations"</span>,
+    <span class="s">"Seamless logistics"</span>,
+    <span class="s">"Thoughtful VIP touches"</span>
+  ],
+  <span class="k">"improvement_tags"</span>: []
+}`,
+    response:`{
+  <span class="k">"success"</span>: <span class="b">true</span>,
+  <span class="k">"trip_id"</span>: <span class="s">"trip_abc123"</span>,
+  <span class="k">"feedback_type"</span>: <span class="s">"trip"</span>,
+  <span class="k">"trip_rating"</span>: <span class="n">5</span>,
+  <span class="k">"trip_positive_tags"</span>: [<span class="s">"Amazing accommodations"</span>, <span class="s">"Seamless logistics"</span>, <span class="s">"Thoughtful VIP touches"</span>],
+  <span class="k">"trip_improvement_tags"</span>: [],
+  <span class="k">"trip_feedback_date"</span>: <span class="s">"2026-12-12T09:00:00Z"</span>
+}`,
+    errors:{
+      '401':`{ <span class="k">"error"</span>: <span class="s">"Unauthorized"</span>, <span class="k">"message"</span>: <span class="s">"Invalid or expired JWT token"</span> }`,
+      '403':`{ <span class="k">"error"</span>: <span class="s">"Forbidden"</span>, <span class="k">"message"</span>: <span class="s">"Access denied"</span> }`,
+      '404':`{ <span class="k">"error"</span>: <span class="s">"Not Found"</span>, <span class="k">"message"</span>: <span class="s">"Trip not found"</span> }`,
+      '429':`{ <span class="k">"error"</span>: <span class="s">"Rate Limited"</span>, <span class="k">"message"</span>: <span class="s">"Too many requests. Retry after 2 seconds."</span>, <span class="k">"retry_after"</span>: <span class="n">2</span> }`
+    }
+  }
+];
+
+function renderEndpoints(){
+  const c = document.getElementById('api-endpoints');
+  c.innerHTML = endpoints.map((ep,i) => {
+    const mc = ep.method==='GET'?'method-get':ep.method==='PATCH'?'method-patch':'method-post';
+    const hasReq = ep.request !== null;
+    return `<div class="panel" id="ep-${i}">
+      <div class="flex items-start justify-between gap-4 mb-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="method-badge ${mc}">${ep.method}</span>
+          <code class="text-sm text-[#93ddff] font-mono">${ep.path}</code>
+          <span class="text-sm text-white font-semibold">${ep.title}</span>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          ${ep.protoLink?`<a href="${ep.protoLink}" class="proto-link text-[11px]">See in Prototype <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg></a>`:''}
+          <button onclick="toggleTry(${i})" class="px-3 py-1.5 bg-[#1e1e35] border border-[#252540] text-xs text-gray-300 rounded-lg hover:bg-[#252540] transition-colors font-medium" id="try-btn-${i}">Try it</button>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mb-2">${ep.desc}</p>
+      <div class="text-[11px] text-gray-500 mb-2"><span class="text-gray-600 font-medium">Auth:</span> ${ep.auth}</div>
+      <p class="text-[11px] text-gray-500">${ep.notes}</p>
+      <div class="try-panel" id="try-panel-${i}">
+        <div class="mt-4 border-t border-[#1a1a30] pt-4">
+          ${hasReq?`<div class="mb-3"><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1.5">Request Body</div><div class="code-block">${ep.request}<button class="copy-btn" onclick="copyCode(this)">Copy</button></div></div>`:''}
+          <div class="flex items-center gap-2 mb-2">
+            <div class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Response</div>
+            <div class="flex gap-1 ml-auto" id="err-tabs-${i}">
+              <button class="err-tab active" onclick="showErrTab(${i},'200')">200 OK</button>
+              <button class="err-tab" onclick="showErrTab(${i},'401')">401</button>
+              <button class="err-tab" onclick="showErrTab(${i},'403')">403</button>
+              <button class="err-tab" onclick="showErrTab(${i},'404')">404</button>
+              <button class="err-tab" onclick="showErrTab(${i},'429')">429</button>
+            </div>
+          </div>
+          <div id="resp-area-${i}">
+            <div class="flex items-center justify-center py-8 hidden" id="resp-spinner-${i}"><div class="spinner"></div></div>
+            <div class="code-block hidden" id="resp-code-${i}">${ep.response}<button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const tryStates = {};
+function toggleTry(idx) {
+  const panel = document.getElementById('try-panel-'+idx);
+  const isOpen = panel.classList.contains('open');
+  if(isOpen){
+    panel.classList.remove('open');
+    document.getElementById('try-btn-'+idx).textContent='Try it';
+    tryStates[idx]=false;
+    return;
+  }
+  panel.classList.add('open');
+  document.getElementById('try-btn-'+idx).textContent='Close';
+  if(!tryStates[idx]){
+    tryStates[idx]=true;
+    const spinner = document.getElementById('resp-spinner-'+idx);
+    const code = document.getElementById('resp-code-'+idx);
+    spinner.classList.remove('hidden');
+    code.classList.add('hidden');
+    setTimeout(()=>{
+      spinner.classList.add('hidden');
+      code.classList.remove('hidden');
+      code.classList.add('slide-in');
+    },600);
+  }
+}
+
+function showErrTab(epIdx, code) {
+  const tabs = document.getElementById('err-tabs-'+epIdx).querySelectorAll('.err-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const codeEl = document.getElementById('resp-code-'+epIdx);
+  const ep = endpoints[epIdx];
+  if(code==='200'){
+    codeEl.innerHTML = ep.response + '<button class="copy-btn" onclick="copyCode(this)">Copy</button>';
+  } else {
+    codeEl.innerHTML = ep.errors[code] + '<button class="copy-btn" onclick="copyCode(this)">Copy</button>';
+  }
+  codeEl.classList.remove('hidden');
+  document.getElementById('resp-spinner-'+epIdx).classList.add('hidden');
+}
+
+// ============================================================
+// STATE MACHINES
+// ============================================================
+const stateMachines = [
+  {
+    title:'Trip Status',
+    desc:'Forward-only, advisor-controlled. Determines what the member sees on the trip page.',
+    states:[
+      {id:'not_started',label:'Not Started',display:'Trip Received',api:'Manual (ops)',db:'Trip Status field',ui:'Placeholder view only'},
+      {id:'trip_identified',label:'Trip Identified',display:'Getting Started',api:'Manual (ops)',db:'Trip Status field',ui:'Status + summary visible'},
+      {id:'outline',label:'Outline',display:'Planning Your Trip',api:'Manual (ops)',db:'Trip Status field',ui:'At a Glance (draft), day-by-day view-only, tips'},
+      {id:'itinerary_review',label:'Itinerary Review',display:'Review Your Options',api:'Manual (ops)',db:'Trip Status field',ui:'ALL sections. Approve/Decline/Comments enabled.'},
+      {id:'booking_in_progress',label:'Booking In Progress',display:'Booking Underway',api:'Manual (ops)',db:'Trip Status field',ui:'Decisions locked, comments open'},
+      {id:'booking_complete',label:'Booking Complete',display:'All Booked!',api:'Manual (ops)',db:'Trip Status field',ui:'Conf numbers shown, finalized view'},
+      {id:'on_trip',label:'On Trip',display:'Enjoy Your Trip!',api:'Manual (ops)',db:'Trip Status field',ui:'Same as Booking Complete + tips prominent'},
+      {id:'post_trip',label:'Post Trip',display:'Welcome Back',api:'Manual (ops)',db:'Trip Status field',ui:'Feedback modal on first visit'}
+    ],
+    transitions:'forward-only'
+  },
+  {
+    title:'Client-Facing Status',
+    desc:'Advisor-controlled. Shown on each component card.',
+    states:[
+      {id:'working',label:'Working on it',display:'Working on it',api:'Set by advisor in Notion',db:'Client-Facing Status (Components)',ui:'Gray status badge on card'},
+      {id:'need_input',label:'Need your input',display:'Need your input',api:'Set by advisor',db:'Client-Facing Status',ui:'Amber badge, action buttons may appear'},
+      {id:'ready',label:'Ready for approval',display:'Ready for approval',api:'Set by advisor',db:'Client-Facing Status',ui:'Green badge, thumbs up/down enabled'},
+      {id:'on_hold',label:'On hold',display:'On hold',api:'Set by advisor',db:'Client-Facing Status',ui:'Gray badge, no actions'},
+      {id:'confirmed',label:'Confirmed',display:'Confirmed',api:'Set by advisor after decision',db:'Client-Facing Status',ui:'Blue badge'},
+      {id:'booked',label:'Booked',display:'Booked',api:'Set by advisor after booking',db:'Client-Facing Status + Conf Number',ui:'Green badge + conf number shown'}
+    ],
+    transitions:'advisor-controlled'
+  },
+  {
+    title:'Client Decision',
+    desc:'Member-controlled, reversible. Only available when Client-Facing Status is "Ready for approval" or "Need your input" AND trip is in Itinerary Review.',
+    states:[
+      {id:'pending',label:'Pending',display:'Pending',api:'Default state',db:'Client Decision (Components)',ui:'Thumbs up/down buttons visible'},
+      {id:'approved',label:'Approved',display:'Approved',api:'PATCH /decision {Approved}',db:'Client Decision + Decision Date + Decided By',ui:'Card highlighted green, Undo button'},
+      {id:'declined',label:'Declined',display:'Declined',api:'PATCH /decision {Declined}',db:'Client Decision + Decision Date + Decided By',ui:'Card grayed out, Undo button'},
+      {id:'needs_changes',label:'Needs Changes',display:'Needs Changes',api:'PATCH /decision {Needs Changes}',db:'Client Decision + Decision Date + Decided By',ui:'Amber highlight, comment prompt, Undo button'}
+    ],
+    transitions:'reversible'
+  },
+  {
+    title:'Comment Status',
+    desc:'Advisor-controlled. Tracks comment lifecycle.',
+    states:[
+      {id:'new',label:'New',display:'New',api:'POST /comments (auto)',db:'Comment Status field',ui:'Unread indicator'},
+      {id:'in_progress',label:'In Progress',display:'In Progress',api:'Set by advisor',db:'Comment Status field',ui:'Working indicator'},
+      {id:'resolved',label:'Resolved',display:'Resolved',api:'Set by advisor',db:'Comment Status field',ui:'Checkmark, dimmed text'},
+      {id:'wont_do',label:"Won't Do",display:"Won't Do",api:'Set by advisor',db:'Comment Status field',ui:'Strikethrough, dimmed'}
+    ],
+    transitions:'forward-only (New -> In Progress -> Resolved/Won\'t Do)'
+  }
+];
+
+let activeSmTab = 0;
+let activeSmNode = -1;
+
+function showSmTab(idx){
+  activeSmTab=idx;activeSmNode=-1;
+  for(let i=0;i<4;i++) document.getElementById('sm-tab-'+i).classList.toggle('active',i===idx);
+  document.getElementById('sm-detail').classList.add('hidden');
+  renderStateMachine();
+}
+
+function renderStateMachine(){
+  const sm=stateMachines[activeSmTab];
+  const c=document.getElementById('sm-container');
+  let html=`<div class="mb-3"><span class="text-xs font-semibold text-white">${sm.title}</span><span class="text-xs text-gray-500 ml-2">${sm.desc}</span></div>`;
+  html+=`<div class="flex flex-wrap items-center gap-2">`;
+  sm.states.forEach((s,i)=>{
+    if(i>0) html+=`<div class="sm-arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>`;
+    html+=`<div class="sm-node ${activeSmNode===i?'sm-active':''}" onclick="selectSmNode(${i})"><div class="text-xs font-semibold text-white mb-1">${s.label}</div><div class="text-[10px] text-gray-500">${s.display}</div></div>`;
+  });
+  html+=`</div>`;
+  if(sm.transitions==='reversible'){
+    html+=`<div class="mt-3 text-[11px] text-gray-500 flex items-center gap-1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fcc93c" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg> All transitions are reversible via Undo</div>`;
+  }
+  c.innerHTML=html;
+}
+
+function selectSmNode(idx){
+  activeSmNode=idx;
+  renderStateMachine();
+  const sm=stateMachines[activeSmTab];
+  const s=sm.states[idx];
+  const d=document.getElementById('sm-detail');
+  document.getElementById('sm-detail-title').textContent=s.label;
+  document.getElementById('sm-detail-content').innerHTML=`
+    <div class="grid grid-cols-2 gap-4">
+      <div class="panel-sm"><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">API Trigger</div><div class="text-xs text-gray-300">${s.api}</div></div>
+      <div class="panel-sm"><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">DB Fields Changed</div><div class="text-xs text-gray-300">${s.db}</div></div>
+      <div class="panel-sm" style="grid-column:span 2"><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Mobile UI Display</div><div class="text-xs text-gray-300">${s.ui}</div></div>
+    </div>
+    ${sm.states[idx]?`<div class="mt-3"><a href="index.html?status=${idx}" class="proto-link">See this state in prototype <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg></a></div>`:''}
+  `;
+  d.classList.remove('hidden');
+}
+
+// ============================================================
+// SEQUENCE DIAGRAMS
+// ============================================================
+const sequences = [
+  {
+    title:'Trip Page Load',
+    actors:['Member','Mobile App','BFF','Notion API'],
+    steps:[
+      {from:0,to:1,label:'Opens trip page',detail:'Member taps trip from list view',json:null},
+      {from:1,to:2,label:'GET /trips/:id',detail:'Mobile sends authenticated request with JWT',json:`<span class="k">GET</span> <span class="s">/trips/trip_abc123</span>\n<span class="k">Authorization</span>: <span class="s">Bearer eyJhbG...</span>\n<span class="k">X-Request-ID</span>: <span class="s">550e8400-e29b-41d4-a716</span>`},
+      {from:2,to:3,label:'Query trip + components',detail:'BFF maps member_id to notion_user_id, queries Trips DB',json:`<span class="c">// Notion API query</span>\n<span class="k">"filter"</span>: { <span class="k">"property"</span>: <span class="s">"id"</span>, <span class="k">"equals"</span>: <span class="s">"trip_abc123"</span> }`},
+      {from:3,to:2,label:'Trip data + components',detail:'Notion returns trip metadata + all components',json:`<span class="c">// 3 req/sec rate limit applies</span>\n<span class="k">"results"</span>: [{ <span class="k">"id"</span>: <span class="s">"trip_abc123"</span>, ... }]`},
+      {from:2,to:1,label:'JSON response',detail:'BFF checks trip_page_type for routing',json:`<span class="k">"trip_page_type"</span>: <span class="s">"Structured"</span>\n<span class="c">// Routes to Dynamic Trip Page view</span>`},
+      {from:1,to:1,label:'Route by trip_page_type',detail:'Structured -> Dynamic view, Notion -> WebView, Custom -> Custom view',json:null},
+      {from:1,to:1,label:'Render phase-dependent view',detail:'Check trip status, show/hide sections per view logic matrix',json:null},
+      {from:1,to:1,label:'Start 60s polling',detail:'setInterval polls GET /trips/:id every 60 seconds',json:`<span class="c">// Polling config</span>\n<span class="k">"interval"</span>: <span class="n">60000</span>\n<span class="k">"pull_to_refresh"</span>: <span class="b">true</span>`}
+    ]
+  },
+  {
+    title:'Approve Component',
+    actors:['Member','Mobile App','BFF','Notion API'],
+    steps:[
+      {from:0,to:1,label:'Taps thumbs up',detail:'Member approves Corinthia London component',json:null},
+      {from:1,to:1,label:'Optimistic UI update',detail:'Card immediately shows "Selected" state with green highlight',json:`<span class="c">// Local state update</span>\n<span class="k">"client_decision"</span>: <span class="s">"Approved"</span>\n<span class="k">"ui_state"</span>: <span class="s">"Selected"</span>`},
+      {from:1,to:2,label:'PATCH /decision',detail:'Send decision with idempotency key',json:`<span class="k">"decision"</span>: <span class="s">"Approved"</span>,\n<span class="k">"comment"</span>: <span class="s">"Love the Thames view option!"</span>\n<span class="c">// Idempotency-Key: john:comp_hotel_01:decision:Approved</span>`},
+      {from:2,to:3,label:'Update Component DB',detail:'BFF writes Client Decision, Decision Date, Decided By',json:`<span class="c">// Notion update</span>\n<span class="k">"Client Decision"</span>: <span class="s">"Approved"</span>\n<span class="k">"Client Decision Date"</span>: <span class="s">"2026-11-20"</span>\n<span class="k">"Decided By"</span>: <span class="s">"John D."</span>`},
+      {from:2,to:3,label:'Auto-create task',detail:'Creates task in Notion Task Dashboard',json:`<span class="k">"title"</span>: <span class="s">"Corinthia London — Approved by John D."</span>`},
+      {from:3,to:2,label:'200 OK',detail:'Notion confirms both writes',json:null},
+      {from:2,to:1,label:'200 OK + updated data',detail:'BFF returns confirmed decision state',json:`<span class="k">"client_decision"</span>: <span class="s">"Approved"</span>,\n<span class="k">"task_created"</span>: <span class="b">true</span>`},
+      {from:1,to:1,label:'Next poll confirms',detail:'60s poll confirms server state matches optimistic UI',json:null}
+    ]
+  },
+  {
+    title:'Post Comment',
+    actors:['Member','Mobile App','BFF','Notion API'],
+    steps:[
+      {from:0,to:1,label:'Types + sends comment',detail:'Member posts comment on Corinthia London component',json:null},
+      {from:1,to:2,label:'POST /comments',detail:'Send with idempotency key',json:`<span class="k">"comment"</span>: <span class="s">"Is late check-in possible?"</span>,\n<span class="k">"comment_type"</span>: <span class="s">"Client"</span>\n<span class="c">// Idempotency-Key: john:comp_hotel_01:comment:abc123:1732100</span>`},
+      {from:2,to:3,label:'Create comment record',detail:'BFF creates entry in Component Comments DB',json:`<span class="k">"Comment"</span>: <span class="s">"Is late check-in possible?"</span>\n<span class="k">"Component"</span>: <span class="s">"comp_hotel_01"</span>\n<span class="k">"Comment Type"</span>: <span class="s">"Client"</span>\n<span class="k">"Status"</span>: <span class="s">"New"</span>`},
+      {from:2,to:3,label:'Auto-create task',detail:'Creates task for advisor notification',json:`<span class="k">"title"</span>: <span class="s">"Corinthia London — New comment from John D."</span>`},
+      {from:3,to:2,label:'201 Created',detail:'Both records created successfully',json:null},
+      {from:2,to:1,label:'201 Created + comment data',detail:'BFF returns new comment',json:`<span class="k">"id"</span>: <span class="s">"cmt_003"</span>,\n<span class="k">"status"</span>: <span class="s">"New"</span>,\n<span class="k">"task_created"</span>: <span class="b">true</span>`},
+      {from:1,to:0,label:'Toast notification',detail:'"Sent! Your advisor will be notified."',json:null},
+      {from:1,to:1,label:'Next poll shows in list',detail:'Comment appears in comment thread on next 60s poll',json:null}
+    ]
+  },
+  {
+    title:'Submit Feedback',
+    actors:['Member','Mobile App','BFF','Notion API'],
+    steps:[
+      {from:0,to:1,label:'Opens feedback modal',detail:'Post Trip phase: modal auto-shows on first visit',json:null},
+      {from:0,to:1,label:'Selects stars + pills',detail:'Member rates 5 stars, selects positive tags',json:`<span class="k">"rating"</span>: <span class="n">5</span>,\n<span class="k">"positive_tags"</span>: [<span class="s">"Amazing accommodations"</span>, <span class="s">"Seamless logistics"</span>]`},
+      {from:1,to:2,label:'PATCH /feedback',detail:'Send with idempotency key',json:`<span class="k">"type"</span>: <span class="s">"trip"</span>,\n<span class="k">"rating"</span>: <span class="n">5</span>,\n<span class="k">"positive_tags"</span>: [<span class="s">"Amazing accommodations"</span>, <span class="s">"Seamless logistics"</span>],\n<span class="k">"improvement_tags"</span>: []\n<span class="c">// Idempotency-Key: john:trip_abc123:feedback:trip</span>`},
+      {from:2,to:3,label:'Update Trips DB',detail:'BFF writes rating, tags, and date to Trips database',json:`<span class="k">"Trip Rating"</span>: <span class="n">5</span>\n<span class="k">"Trip Positive Tags"</span>: [<span class="s">"Amazing accommodations"</span>, ...]\n<span class="k">"Trip Feedback Date"</span>: <span class="s">"2026-12-12"</span>`},
+      {from:3,to:2,label:'200 OK',detail:'Notion confirms write',json:null},
+      {from:2,to:1,label:'200 OK',detail:'BFF confirms feedback saved',json:`<span class="k">"success"</span>: <span class="b">true</span>`},
+      {from:1,to:0,label:'Toast + close modal',detail:'"Thank you for your feedback!" toast, modal closes',json:null}
+    ]
+  }
+];
+
+let activeSeqTab = 0;
+let activeSeqStep = -1;
+let seqPlayInterval = null;
+
+function showSeqTab(idx){
+  activeSeqTab=idx;activeSeqStep=-1;
+  for(let i=0;i<4;i++) document.getElementById('seq-tab-'+i).classList.toggle('active',i===idx);
+  stopSeqPlay();
+  renderSequence();
+  document.getElementById('seq-detail').classList.add('hidden');
+  updateSeqCounter();
+}
+
+function renderSequence(){
+  const seq=sequences[activeSeqTab];
+  const c=document.getElementById('seq-container');
+  let html=`<div class="mb-4"><span class="text-xs font-semibold text-white">${seq.title}</span></div>`;
+  // Actor headers
+  html+=`<div class="seq-step" style="border:0;cursor:default"><div class="seq-actor" style="min-width:60px">#</div>`;
+  seq.actors.forEach(a=>html+=`<div class="seq-actor">${a}</div>`);
+  html+=`</div>`;
+  // Steps
+  seq.steps.forEach((s,i)=>{
+    html+=`<div class="seq-step ${activeSeqStep===i?'seq-active':''}" onclick="selectSeqStep(${i})">`;
+    html+=`<div class="text-[11px] text-gray-500 font-mono text-center" style="min-width:60px">${i+1}</div>`;
+    seq.actors.forEach((a,ai)=>{
+      let content='';
+      if(ai===s.from && s.from===s.to){
+        content=`<div class="text-[11px] text-amber-300 font-medium">${s.label}</div>`;
+      } else if(ai===s.from){
+        content=`<div class="text-[11px] text-gray-300">${s.label} <span class="text-gray-500">&rarr;</span></div>`;
+      } else if(ai===s.to){
+        content=`<div class="text-[11px] text-emerald-400">&rarr; ${s.label}</div>`;
+      } else if(ai>Math.min(s.from,s.to) && ai<Math.max(s.from,s.to)){
+        content=`<div class="text-gray-600">&mdash;</div>`;
+      }
+      html+=`<div class="seq-col">${content}</div>`;
+    });
+    html+=`</div>`;
+  });
+  c.innerHTML=html;
+}
+
+function selectSeqStep(idx){
+  activeSeqStep=idx;
+  renderSequence();
+  const step=sequences[activeSeqTab].steps[idx];
+  const d=document.getElementById('seq-detail');
+  let html=`<div class="text-xs text-gray-300 mb-2">${step.detail}</div>`;
+  if(step.json){
+    html+=`<div class="code-block text-[11px]">${step.json}<button class="copy-btn" onclick="copyCode(this)">Copy</button></div>`;
+  }
+  document.getElementById('seq-detail-content').innerHTML=html;
+  d.classList.remove('hidden');
+  updateSeqCounter();
+}
+
+function seqPrev(){
+  if(activeSeqStep>0) selectSeqStep(activeSeqStep-1);
+  else if(activeSeqStep===-1) selectSeqStep(0);
+}
+
+function seqNext(){
+  const max=sequences[activeSeqTab].steps.length-1;
+  if(activeSeqStep<max) selectSeqStep(activeSeqStep+1);
+  else if(activeSeqStep===-1) selectSeqStep(0);
+}
+
+function seqPlayAll(){
+  if(seqPlayInterval){stopSeqPlay();return;}
+  activeSeqStep=-1;
+  document.getElementById('seq-play-btn').textContent='Pause';
+  seqNext();
+  seqPlayInterval=setInterval(()=>{
+    const max=sequences[activeSeqTab].steps.length-1;
+    if(activeSeqStep>=max){stopSeqPlay();return;}
+    seqNext();
+  },1500);
+}
+
+function stopSeqPlay(){
+  clearInterval(seqPlayInterval);seqPlayInterval=null;
+  document.getElementById('seq-play-btn').textContent='Play All';
+}
+
+function updateSeqCounter(){
+  const total=sequences[activeSeqTab].steps.length;
+  document.getElementById('seq-step-counter').textContent=`Step ${activeSeqStep+1<1?0:activeSeqStep+1} / ${total}`;
+}
+
+// Keyboard support for sequences
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();seqNext();}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();seqPrev();}
+});
+
+// ============================================================
+// EDGE CASES
+// ============================================================
+const edgeCases = [
+  {num:1,title:'No components yet',desc:'Trip exists but has no components',handling:'Show placeholder message: "Your advisor is crafting your itinerary. Check back soon!"',severity:'low'},
+  {num:2,title:'Component without dates',desc:'Component has no date assigned',handling:'Group under "To Be Scheduled" section at the bottom of itinerary',severity:'low'},
+  {num:3,title:'Reversing decision',desc:'Member changes their mind after approving/declining',handling:'Show "Undo" button on decided cards. Undo resets to Pending via PATCH.',severity:'med'},
+  {num:4,title:'Offline actions',desc:'Member takes action while offline',handling:'Queue locally. On reconnect, replay in order. Server-wins conflict resolution.',severity:'high'},
+  {num:5,title:'Concurrent edits',desc:'Advisor updates while member is viewing',handling:'Toast notification on next 60s poll: "Trip updated by your advisor"',severity:'med'},
+  {num:6,title:'Dismissed feedback',desc:'Member dismisses Post Trip feedback modal',handling:'Reappears on next visit. After 3 dismissals: persistent banner. Stops prompting after 5.',severity:'low'},
+  {num:7,title:'Parallel trips',desc:'Member has multiple active trips',handling:'Independent lifecycle per trip. Trip list sorted by Start Date desc.',severity:'low'},
+  {num:8,title:'Empty option group',desc:'Option group with no recommendations yet',handling:'Show group header with comment prompt: "Ask your advisor about options"',severity:'low'},
+  {num:9,title:'Rate limit (429)',desc:'BFF receives 429 from Notion API',handling:'Exponential backoff. Show "Saving..." indicator. Max 3 retries.',severity:'high'},
+  {num:10,title:'Comment on deleted component',desc:'Component removed after comment was posted',handling:'Comment hidden from view. Logged for audit trail.',severity:'med'},
+  {num:11,title:'Advisor replies while viewing',desc:'Advisor posts reply while member has page open',handling:'Next poll cycle picks up new comment. Slide-in animation.',severity:'low'},
+  {num:12,title:'Two members approve offline',desc:'Two trip members approve same component while both offline',handling:'Both submissions processed independently. Last-write-wins on server.',severity:'med'}
+];
+
+function renderEdgeCases(){
+  const c=document.getElementById('edge-cases-grid');
+  c.innerHTML=edgeCases.map(ec=>{
+    const sevColor=ec.severity==='high'?'text-red-400 bg-red-400/10':ec.severity==='med'?'text-amber-400 bg-amber-400/10':'text-gray-400 bg-gray-400/10';
+    return `<div class="edge-card">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-[11px] font-mono text-gray-500">#${ec.num}</span>
+        <span class="text-sm font-semibold text-white flex-1">${ec.title}</span>
+        <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${sevColor}">${ec.severity}</span>
+      </div>
+      <p class="text-xs text-gray-500 mb-2">${ec.desc}</p>
+      <div class="text-xs text-gray-300 bg-[#111122] rounded-lg p-3 border border-[#252540]">${ec.handling}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// INTERSECTION OBSERVER (Sidebar highlight)
+// ============================================================
+function setupScrollSpy(){
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('.sidebar a[data-section]');
+  const observer = new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        links.forEach(l=>l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar a[data-section="${entry.target.id}"]`);
+        if(active) active.classList.add('active');
+      }
+    });
+  },{rootMargin:'-80px 0px -60% 0px',threshold:0});
+  sections.forEach(s=>observer.observe(s));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded',()=>{
+  renderEndpoints();
+  renderStateMachine();
+  renderSequence();
+  renderEdgeCases();
+  updateSeqCounter();
+  setupScrollSpy();
+});
+</script>
+</body>
+</html>
