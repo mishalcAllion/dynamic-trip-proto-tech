@@ -140,10 +140,10 @@ code,pre,.code-font{font-family:'JetBrains Mono',monospace}
 .bpmn-phase-tab.active{background:#1e1e35;color:#c8d4e4;border-color:#252540}
 .bpmn-phase-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 /* Full diagram columns */
-.bpmn-full-phase{display:inline-block;vertical-align:top;min-width:280px;border-right:1px solid #1e1e35;padding:0}
+.bpmn-full-phase{flex:0 0 auto;min-width:220px;border-right:1px solid #1e1e35;padding:0}
 .bpmn-full-phase:last-child{border-right:none}
-.bpmn-full-phase-header{padding:10px 14px;background:#14142a;border-bottom:1px solid #1e1e35;font-size:11px;font-weight:600;color:#c8d4e4;display:flex;align-items:center;gap:6px}
-.bpmn-full-lane{border-bottom:1px solid #1a1a30;padding:10px 14px;min-height:60px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bpmn-full-phase-header{padding:10px 14px;background:#14142a;border-bottom:1px solid #1e1e35;font-size:11px;font-weight:600;color:#c8d4e4;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.bpmn-full-lane{border-bottom:1px solid #1a1a30;padding:10px 14px;min-height:60px;display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
 .bpmn-full-lane:last-child{border-bottom:none}
 .bpmn-full-lane .bpmn-task{font-size:10px;padding:6px 10px;max-width:180px}
 .bpmn-full-lane .bpmn-task .bpmn-task-label{font-size:10px}
@@ -742,7 +742,7 @@ sequenceDiagram
   <!-- Full diagram view (hidden) -->
   <div id="bpmn-full-view" class="hidden">
     <div class="panel" style="overflow-x:auto;padding:0">
-      <div id="bpmn-full-diagram" style="min-width:2400px"></div>
+      <div id="bpmn-full-diagram" style="display:flex;align-items:stretch"></div>
     </div>
   </div>
 
@@ -1808,7 +1808,7 @@ function renderBpmnFullDiagram() {
   let html = '';
 
   // Lane labels column
-  html += `<div style="display:inline-block;vertical-align:top;width:140px;position:sticky;left:0;z-index:2;background:#0f0f1a">`;
+  html += `<div style="flex:0 0 140px;position:sticky;left:0;z-index:2;background:#0f0f1a">`;
   // Header spacer
   html += `<div style="height:40px;background:#14142a;border-bottom:1px solid #1e1e35;border-right:1px solid #1e1e35"></div>`;
   bpmnLaneConfig.forEach(lane => {
