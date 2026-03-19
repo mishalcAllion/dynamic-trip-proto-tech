@@ -526,10 +526,16 @@ function renderPipelineMockup(){
 
 function renderComponentBoardMockup(){
   const cols = [
-    {name:'Working on it',color:'#a78bfa',cards:[{name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending'}]},
+    {name:'Working on it',color:'#a78bfa',cards:[
+      {name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending'},
+      {name:'SFO -> NRT Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Pending'},
+      {name:'Park Hyatt Tokyo',cat:'HOTEL',icon:'&#127976;',decision:'Pending'},
+      {name:'Tsukiji Market Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending'},
+      {name:'Nozomi Shinkansen',cat:'TRAIN',icon:'&#128645;',decision:'Pending'}
+    ]},
     {name:'Need your input',color:'#fbbf24',cards:[{name:'Tower of London Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending'}]},
     {name:'Ready for approval',color:'#60a5fa',cards:[
-      {name:'AUS -> LHR Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Approved'},
+      {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',icon:'&#9992;',decision:'Approved'},
       {name:'Corinthia London',cat:'HOTEL',icon:'&#127976;',decision:'Pending'},
       {name:'The Ritz London',cat:'HOTEL',icon:'&#127976;',decision:'Declined'}
     ]},
@@ -555,10 +561,10 @@ function renderComponentBoardMockup(){
 
 function renderActionsFeedMockup(){
   const rows = [
-    {title:'AUS->LHR -- Approved by John D.',trip:'Where Winter Glows',component:'AUS->LHR Flight',status:'New',priority:'High',created:'2 min ago',isNew:true},
-    {title:'The Ritz London -- Declined by John D.',trip:'Where Winter Glows',component:'The Ritz London',status:'New',priority:'High',created:'5 min ago',isNew:true},
-    {title:'Corinthia London -- New comment from John D.',trip:'Where Winter Glows',component:'Corinthia London',status:'New',priority:'Medium',created:'12 min ago',isNew:true},
-    {title:'Le Jules Verne -- New comment from Susan U.',trip:'Where Winter Glows',component:'Le Jules Verne',status:'In Progress',priority:'Medium',created:'1 hr ago',isNew:false}
+    {title:'The Ritz London -- Declined by John D.',trip:'Where Winter Glows',component:'The Ritz London',status:'New',priority:'Urgent',created:'2 min ago',isNew:true},
+    {title:'Corinthia London -- New comment from John D.',trip:'Where Winter Glows',component:'Corinthia London',status:'New',priority:'Normal',created:'5 min ago',isNew:true},
+    {title:'AUS->LHR Flight -- Approved by John D.',trip:'Where Winter Glows',component:'AUS -> LHR Flight',status:'New',priority:'Urgent',created:'12 min ago',isNew:true},
+    {title:'Le Jules Verne -- New comment from Susan U.',trip:'Where Winter Glows',component:'Le Jules Verne',status:'In Progress',priority:'Normal',created:'1 hr ago',isNew:false}
   ];
   let html = '<div class="notion-board" style="overflow-x:auto"><table class="notion-table"><thead><tr><th>Title</th><th>Trip</th><th>Component</th><th>Status</th><th>Priority</th><th>Created</th></tr></thead><tbody>';
   rows.forEach(r => {
@@ -571,15 +577,17 @@ function renderActionsFeedMockup(){
 }
 
 function renderCommentsMockup(){
+  // Matches actual Notion "Unresolved Comments" view: filtered Status != Resolved and != Won't Do
   const rows = [
-    {comment:'Can we get a room with a Thames view?',component:'Corinthia London',type:'Client',status:'New',isFirst:true,threadCount:4},
-    {comment:'Absolutely! I\'ve noted the Thames-view penthouse suite.',component:'Corinthia London',type:'Maestro',status:'In Progress',isFirst:false},
-    {comment:'Is late check-in possible? We arrive around 11 PM.',component:'Corinthia London',type:'Client',status:'New',isFirst:false},
-    {comment:'Also, can you arrange airport transfer from Heathrow?',component:'Corinthia London',type:'Client',status:'New',isFirst:false},
-    {comment:'Any vegetarian options at Le Jules Verne?',component:'Le Jules Verne',type:'Client',status:'In Progress',isFirst:true,threadCount:2},
-    {comment:'My wife has a shellfish allergy -- please flag this',component:'Le Jules Verne',type:'Client',status:'New',isFirst:false},
+    {comment:'Is late check-in possible? We arrive around 11 PM.',component:'Corinthia London',type:'Client',status:'New',isFirst:true,threadCount:3},
+    {comment:'Looking into late check-in now -- most likely yes for the suite. Will confirm within 24 hrs.',component:'Corinthia London',type:'Maestro',status:'In Progress',isFirst:false},
+    {comment:'Also, can you arrange airport transfer from Heathrow? Private car preferred.',component:'Corinthia London',type:'Client',status:'New',isFirst:false},
+    {comment:'Any vegetarian options at Le Jules Verne?',component:'Le Jules Verne',type:'Client',status:'In Progress',isFirst:true,threadCount:3},
+    {comment:'Yes! Chef Frederic Anton offers a dedicated vegetarian tasting menu. I\'ll pre-arrange this.',component:'Le Jules Verne',type:'Maestro',status:'In Progress',isFirst:false},
+    {comment:'My wife has a shellfish allergy -- please flag this with the kitchen.',component:'Le Jules Verne',type:'Client',status:'New',isFirst:false},
     {comment:'Client prefers window seat',component:'AUS->LHR Flight',type:'Internal',status:'New',isFirst:true,threadCount:2},
-    {comment:'Checked availability -- 2A and 2K both window, recommending 2A',component:'AUS->LHR Flight',type:'Internal',status:'New',isFirst:false}
+    {comment:'Checked availability -- 2A and 2K both window seats in First. Recommending 2A.',component:'AUS->LHR Flight',type:'Internal',status:'New',isFirst:false},
+    {comment:'Can we do a private tour instead of group? Happy to pay extra.',component:'Tower of London Tour',type:'Client',status:'New',isFirst:true,threadCount:1}
   ];
   let html = '<div class="notion-board" style="overflow-x:auto">';
   html += '<div style="margin-bottom:10px;font-size:11px;color:#787774;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#787774" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h6"/></svg>Filtered: Status is not Resolved and Status is not Won\'t Do | Sorted by: Component, then Created time</div>';
@@ -594,17 +602,22 @@ function renderCommentsMockup(){
     html += '<tr style="'+topBorder+'"><td style="font-weight:500;max-width:300px;'+(r.isFirst?'':'color:#4b4a48;')+'">'+r.comment+'</td><td>'+componentCell+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+typeStyle+'">'+r.type+'</span></td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+statusStyle+'">'+r.status+'</span></td></tr>';
   });
   html += '</tbody></table>';
-  html += '<div style="margin-top:10px;padding:10px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:11px;color:#92400e;display:flex;align-items:center;gap:6px"><strong>Note:</strong> Multiple comments per component are common -- Corinthia London has 4 active comments across 2 threads. Group by Component to see related comments together.</div>';
+  html += '<div style="margin-top:10px;padding:10px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:11px;color:#92400e;display:flex;align-items:center;gap:6px"><strong>Note:</strong> 9 unresolved comments across 4 components. Corinthia London and Le Jules Verne each have 3 active comments. Use the "Comments by Component" board view to see grouped threads.</div>';
   html += '</div>';
   return html;
 }
 
 function renderFinalizationMockup(){
+  // Matches actual Notion "Finalization Checklist" view: all components sorted by Display Order
   const rows = [
-    {name:'AUS -> LHR Flight',cat:'FLIGHT',decision:'Approved',decOk:true,status:'Ready for approval',conf:'',confOk:false},
+    {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',decision:'Approved',decOk:true,status:'Ready for approval',conf:'',confOk:false},
+    {name:'SFO -> NRT Flight',cat:'FLIGHT',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
     {name:'Corinthia London',cat:'HOTEL',decision:'Pending',decOk:false,status:'Ready for approval',conf:'',confOk:false},
+    {name:'Park Hyatt Tokyo',cat:'HOTEL',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
     {name:'The Ritz London',cat:'HOTEL',decision:'Declined',decOk:true,status:'Ready for approval',conf:'',confOk:false},
+    {name:'Tsukiji Market Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
     {name:'Tower of London Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Need your input',conf:'',confOk:false},
+    {name:'Nozomi Shinkansen',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
     {name:'Eurostar to Paris',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
     {name:'Le Jules Verne',cat:'DINING',decision:'Approved',decOk:true,status:'Confirmed',conf:'JV-2026-1234',confOk:true}
   ];
@@ -615,7 +628,7 @@ function renderFinalizationMockup(){
     html += '<tr><td style="font-weight:500">'+r.name+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;background:#f3f2ef;color:#787774">'+r.cat+'</span></td><td>'+decIcon+r.decision+'</td><td>'+r.status+'</td><td>'+confCell+'</td></tr>';
   });
   html += '</tbody></table>';
-  html += '<div style="margin-top:12px;padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:#991b1b"><strong>Blockers:</strong> 3 components have no decision. 5 components missing confirmation number. 0 of 6 components in "Booked" status. This trip is NOT ready for "Booking Complete".</div>';
+  html += '<div style="margin-top:12px;padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:#991b1b"><strong>Blockers:</strong> 7 components have no decision. 9 components missing confirmation number. 0 of 10 components in "Booked" status. Neither trip is ready for "Booking Complete".</div>';
   html += '</div>';
   return html;
 }
