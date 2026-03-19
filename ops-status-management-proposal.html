@@ -442,13 +442,13 @@ function toggleGap(i){
 // ============================================================
 const viewData = [
   {name:'Trip Status Pipeline',db:'Trips',type:'Board (Kanban)',groupBy:'Trip Status',
-   config:'Columns: 8 status columns | Filter: Status != Post Trip | Show: Trip name, destinations, start date | Sort: Start date ascending',
+   config:'Columns: 8 status columns | Filter: Status != Post Trip | Show: Trip name, destinations, start date, Advisor (select) | Sort: Start date ascending',
    id:'view-pipeline'},
   {name:'Component Status Board',db:'Components',type:'Board (Kanban)',groupBy:'Client-Facing Status',
-   config:'Columns: 6 status columns | Filter: Trip = [selected trip] | Show: Name, category icon, client decision | Sort: Display order',
+   config:'Columns: 6 status columns | Filter: Trip = [selected trip] | Show: Name, category icon, client decision, Comment Count (rollup), Member Decisions | Sort: Display order',
    id:'view-components'},
   {name:'Member Actions Feed',db:'Task Dashboard',type:'Table',groupBy:'N/A',
-   config:'Filter: Source = "Member Action", Created within 7 days | Sort: Created time (newest) | Show: Title, Trip, Component, Status, Priority, Created',
+   config:'Filter: Source = "Member Action", Created within 7 days | Sort: Created time (newest) | Show: Title, Trip (relation), Component (relation -- clickable!), Status, Priority, Created',
    id:'view-actions'},
   {name:'Unresolved Comments',db:'Component Comments',type:'Table',groupBy:'N/A',
    config:'Filter: Status != Resolved AND Status != Won\'t Do | Sort: Created time (newest) | Show: Comment, Component, Comment Type, Status',
@@ -458,7 +458,13 @@ const viewData = [
    id:'view-finalization'},
   {name:'Ops Master Dashboard',db:'Linked Databases (page)',type:'Dashboard Page',groupBy:'N/A',
    config:'Embeds: Trip Status Pipeline + Member Actions Feed + Unresolved Comments as linked database views on a single Notion page',
-   id:'view-dashboard'}
+   id:'view-dashboard'},
+  {name:'Task Board',db:'Task Dashboard',type:'Board (Kanban)',groupBy:'Status',
+   config:'Columns: New, In Progress, Done | Show: Title, Trip (relation), Component (relation -- clickable), Priority, Source | Drag cards between columns to update task status',
+   id:'view-taskboard'},
+  {name:'Trip Calendar',db:'Trips',type:'Calendar',groupBy:'Start Date',
+   config:'Calendar by: Start Date | Show: Trip name, Destinations, Trip Status, Travelers, Advisor | Color-coded by Trip Status',
+   id:'view-calendar'}
 ];
 
 let currentView = 0;
@@ -489,33 +495,36 @@ function renderViewContent(i){
   else if(i===3) mockup = renderCommentsMockup();
   else if(i===4) mockup = renderFinalizationMockup();
   else if(i===5) mockup = renderDashboardMockup();
+  else if(i===6) mockup = renderTaskBoardMockup();
+  else if(i===7) mockup = renderCalendarMockup();
 
   el.innerHTML = '<div class="panel mb-4"><div class="grid grid-cols-4 gap-4 mb-4">'
     +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Database</div><div class="text-sm text-white">'+v.db+'</div></div>'
     +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">View Type</div><div class="text-sm text-white">'+v.type+'</div></div>'
     +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Group By</div><div class="text-sm text-white">'+v.groupBy+'</div></div>'
-    +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">View #</div><div class="text-sm text-white">'+(i+1)+' of 6</div></div>'
+    +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">View #</div><div class="text-sm text-white">'+(i+1)+' of '+viewData.length+'</div></div>'
     +'</div><div class="text-xs text-gray-400 leading-relaxed bg-[#111122] rounded-lg p-3">'+v.config+'</div></div>'
     +'<div class="panel" style="padding:16px"><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Visual Mockup</div>'+mockup+'</div>';
 }
 
 function renderPipelineMockup(){
   const cols = [
-    {name:'Not Started',color:'#e5e7eb',cards:[{name:'Patagonia Explorer',dest:'Patagonia, Buenos Aires',date:'Jun 1 - Jun 12',travelers:'1'}]},
-    {name:'Trip Identified',color:'#93c5fd',cards:[{name:'Safari & Seychelles',dest:'Nairobi, Seychelles',date:'Mar 5 - Mar 16',travelers:'3'}]},
-    {name:'Outline',color:'#c4b5fd',cards:[{name:'Tokyo Reset',dest:'Tokyo, Kyoto',date:'Jan 15 - Jan 24',travelers:'2'}]},
-    {name:'Itinerary Review',color:'#fcd34d',cards:[{name:'Where Winter Glows',dest:'London, Paris',date:'Nov 30 - Dec 9',travelers:'3'}]},
-    {name:'Booking In Progress',color:'#fdba74',cards:[{name:'Amalfi Coast Anniversary',dest:'Amalfi Coast, Positano',date:'Oct 10 - Oct 18',travelers:'2'}]},
-    {name:'Booking Complete',color:'#6ee7b7',cards:[{name:'Greek Island Hop',dest:'Santorini, Mykonos',date:'Sep 12 - Sep 22',travelers:'2'}]},
-    {name:'On Trip',color:'#67e8f9',cards:[{name:'Maldives Honeymoon',dest:'Maldives',date:'Mar 15 - Mar 25',travelers:'2'}]},
-    {name:'Post Trip',color:'#d1d5db',cards:[{name:'Swiss Alps Ski Week',dest:'Zermatt, Verbier',date:'Feb 1 - Feb 8',travelers:'4'}]}
+    {name:'Not Started',color:'#e5e7eb',cards:[{name:'Patagonia Explorer',dest:'Patagonia, Buenos Aires',date:'Jun 1 - Jun 12',travelers:'1',advisor:'Nirav'}]},
+    {name:'Trip Identified',color:'#93c5fd',cards:[{name:'Safari & Seychelles',dest:'Nairobi, Seychelles',date:'Mar 5 - Mar 16',travelers:'3',advisor:'Mishal'}]},
+    {name:'Outline',color:'#c4b5fd',cards:[{name:'Tokyo Reset',dest:'Tokyo, Kyoto',date:'Jan 15 - Jan 24',travelers:'2',advisor:'Sunthar'}]},
+    {name:'Itinerary Review',color:'#fcd34d',cards:[{name:'Where Winter Glows',dest:'London, Paris',date:'Nov 30 - Dec 9',travelers:'3',advisor:'Mishal'}]},
+    {name:'Booking In Progress',color:'#fdba74',cards:[{name:'Amalfi Coast Anniversary',dest:'Amalfi Coast, Positano',date:'Oct 10 - Oct 18',travelers:'2',advisor:'Nirav'}]},
+    {name:'Booking Complete',color:'#6ee7b7',cards:[{name:'Greek Island Hop',dest:'Santorini, Mykonos',date:'Sep 12 - Sep 22',travelers:'2',advisor:'Sunthar'}]},
+    {name:'On Trip',color:'#67e8f9',cards:[{name:'Maldives Honeymoon',dest:'Maldives',date:'Mar 15 - Mar 25',travelers:'2',advisor:'Mishal'}]},
+    {name:'Post Trip',color:'#d1d5db',cards:[{name:'Swiss Alps Ski Week',dest:'Zermatt, Verbier',date:'Feb 1 - Feb 8',travelers:'4',advisor:'Sunthar'}]}
   ];
   let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:1000px">';
   cols.forEach(col => {
     html += '<div class="notion-col" style="flex:1;min-width:120px">';
     html += '<div style="font-size:11px;font-weight:600;color:#787774;padding:6px 8px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:'+col.color+';display:inline-block"></span>'+col.name+' <span style="color:#b4b4b0;font-weight:400">'+col.cards.length+'</span></div>';
     col.cards.forEach(card => {
-      html += '<div class="notion-card"><div style="font-weight:500;margin-bottom:4px;color:#37352f">'+card.name+'</div><div style="color:#787774;font-size:11px">'+card.dest+'</div><div style="color:#9b9b97;font-size:10px;margin-top:4px">'+card.date+' &middot; '+card.travelers+' travelers</div></div>';
+      const advisorColor = card.advisor==='Mishal'?'background:#dbeafe;color:#1d4ed8':card.advisor==='Sunthar'?'background:#dcfce7;color:#16a34a':'background:#fef9c3;color:#92400e';
+      html += '<div class="notion-card"><div style="font-weight:500;margin-bottom:4px;color:#37352f">'+card.name+'</div><div style="color:#787774;font-size:11px">'+card.dest+'</div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="color:#9b9b97;font-size:10px">'+card.date+' &middot; '+card.travelers+' travelers</span></div><div style="margin-top:6px"><span style="font-size:9px;padding:2px 6px;border-radius:3px;'+advisorColor+'">'+card.advisor+'</span></div></div>';
     });
     if(col.cards.length===0) html += '<div style="padding:20px 8px;text-align:center;color:#c8c8c4;font-size:11px">No trips</div>';
     html += '</div>';
@@ -527,20 +536,20 @@ function renderPipelineMockup(){
 function renderComponentBoardMockup(){
   const cols = [
     {name:'Working on it',color:'#a78bfa',cards:[
-      {name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending',members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'},
-      {name:'SFO -> NRT Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'},
-      {name:'Park Hyatt Tokyo',cat:'HOTEL',icon:'&#127976;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'},
-      {name:'Tsukiji Market Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'},
-      {name:'Nozomi Shinkansen',cat:'TRAIN',icon:'&#128645;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'}
+      {name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending',comments:0,members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'},
+      {name:'SFO -> NRT Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Pending',comments:0,members:'Alex W.: Pending | Jennifer P.: Pending'},
+      {name:'Park Hyatt Tokyo',cat:'HOTEL',icon:'&#127976;',decision:'Pending',comments:0,members:'Alex W.: Pending | Jennifer P.: Pending'},
+      {name:'Tsukiji Market Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending',comments:1,members:'Alex W.: Pending | Jennifer P.: Pending'},
+      {name:'Nozomi Shinkansen',cat:'TRAIN',icon:'&#128645;',decision:'Pending',comments:0,members:'Alex W.: Pending | Jennifer P.: Pending'}
     ]},
-    {name:'Need your input',color:'#fbbf24',cards:[{name:'Tower of London Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending',members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'}]},
+    {name:'Need your input',color:'#fbbf24',cards:[{name:'Tower of London Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending',comments:1,members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'}]},
     {name:'Ready for approval',color:'#60a5fa',cards:[
-      {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',icon:'&#9992;',decision:'Approved',members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'},
-      {name:'Corinthia London',cat:'HOTEL',icon:'&#127976;',decision:'Pending',members:'John D.: Approved | Susan U.: Pending | Maria K.: Pending'},
-      {name:'The Ritz London',cat:'HOTEL',icon:'&#127976;',decision:'Declined',members:'John D.: Declined | Susan U.: Declined | Maria K.: Pending'}
+      {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',icon:'&#9992;',decision:'Approved',comments:2,members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'},
+      {name:'Corinthia London',cat:'HOTEL',icon:'&#127976;',decision:'Pending',comments:5,members:'John D.: Approved | Susan U.: Pending | Maria K.: Pending'},
+      {name:'The Ritz London',cat:'HOTEL',icon:'&#127976;',decision:'Declined',comments:0,members:'John D.: Declined | Susan U.: Declined | Maria K.: Pending'}
     ]},
     {name:'On hold',color:'#9ca3af',cards:[]},
-    {name:'Confirmed',color:'#34d399',cards:[{name:'Le Jules Verne',cat:'DINING',icon:'&#127860;',decision:'Approved',members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'}]},
+    {name:'Confirmed',color:'#34d399',cards:[{name:'Le Jules Verne',cat:'DINING',icon:'&#127860;',decision:'Approved',comments:3,members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'}]},
     {name:'Booked',color:'#10b981',cards:[]}
   ];
   let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:900px">';
@@ -563,7 +572,8 @@ function renderComponentBoardMockup(){
         });
         membersHtml += '</div>';
       }
-      html += '<div class="notion-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span>'+card.icon+'</span><span style="font-weight:500;color:#37352f">'+card.name+'</span></div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#f3f2ef;color:#787774">'+card.cat+'</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+dBg+';color:'+dColor+'">'+card.decision+'</span></div>'+membersHtml+'</div>';
+      const commentBadge = card.comments > 0 ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#f3f2ef;color:#787774" title="Comment Count (rollup)">&#128172; '+card.comments+'</span>' : '';
+      html += '<div class="notion-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span>'+card.icon+'</span><span style="font-weight:500;color:#37352f">'+card.name+'</span></div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#f3f2ef;color:#787774">'+card.cat+'</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+dBg+';color:'+dColor+'">'+card.decision+'</span>'+commentBadge+'</div>'+membersHtml+'</div>';
     });
     if(col.cards.length===0) html += '<div style="padding:20px 8px;text-align:center;color:#c8c8c4;font-size:11px">No components</div>';
     html += '</div>';
@@ -583,7 +593,7 @@ function renderActionsFeedMockup(){
   rows.forEach(r => {
     const statusColor = r.status==='New'?'background:#dbeafe;color:#1d4ed8':'background:#fef3c7;color:#92400e';
     const border = r.isNew?'border-left:3px solid #3b82f6':'border-left:3px solid transparent';
-    html += '<tr style="'+border+'"><td style="font-weight:500">'+r.title+'</td><td>'+r.trip+'</td><td>'+r.component+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+statusColor+'">'+r.status+'</span></td><td>'+r.priority+'</td><td style="color:#9b9b97">'+r.created+'</td></tr>';
+    html += '<tr style="'+border+'"><td style="font-weight:500">'+r.title+'</td><td>'+r.trip+'</td><td><span style="color:#2563eb;text-decoration:underline;cursor:pointer" title="Relation link -- click to open component">'+r.component+'</span></td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+statusColor+'">'+r.status+'</span></td><td>'+r.priority+'</td><td style="color:#9b9b97">'+r.created+'</td></tr>';
   });
   html += '</tbody></table></div>';
   return html;
@@ -665,6 +675,68 @@ function renderDashboardMockup(){
     +'<div style="margin-bottom:24px"><div style="font-size:13px;font-weight:600;color:#37352f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:1px;background:#3b82f6;display:inline-block"></span>Member Actions Feed</div><div style="background:#f7f6f3;border-radius:6px;padding:12px;font-size:12px;color:#787774;text-align:center;border:1px solid #e3e2de">Linked Table view -- Task Dashboard sorted by created time (see View 3)</div></div>'
     +'<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:600;color:#37352f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:1px;background:#ef4444;display:inline-block"></span>Unresolved Comments</div><div style="background:#f7f6f3;border-radius:6px;padding:12px;font-size:12px;color:#787774;text-align:center;border:1px solid #e3e2de">Linked Table view -- Comments filtered to New/In Progress (see View 4)</div></div>'
     +'</div>';
+}
+
+function renderTaskBoardMockup(){
+  const cols = [
+    {name:'New',color:'#ef4444',cards:[
+      {title:'The Ritz London -- Declined by John D.',trip:'Where Winter Glows',component:'The Ritz London',priority:'Urgent',source:'Member Action'},
+      {title:'Corinthia London -- New comment from John D.',trip:'Where Winter Glows',component:'Corinthia London',priority:'Normal',source:'Member Action'},
+      {title:'AUS->LHR Flight -- Approved by John D.',trip:'Where Winter Glows',component:'AUS -> LHR Flight',priority:'Urgent',source:'Member Action'}
+    ]},
+    {name:'In Progress',color:'#f59e0b',cards:[
+      {title:'Le Jules Verne -- New comment from Susan U.',trip:'Where Winter Glows',component:'Le Jules Verne',priority:'Normal',source:'Member Action'}
+    ]},
+    {name:'Done',color:'#10b981',cards:[]}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:600px">';
+  cols.forEach(col => {
+    html += '<div class="notion-col" style="flex:1;min-width:180px">';
+    html += '<div style="font-size:11px;font-weight:600;color:#787774;padding:6px 8px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:'+col.color+';display:inline-block"></span>'+col.name+' <span style="color:#b4b4b0;font-weight:400">'+col.cards.length+'</span></div>';
+    col.cards.forEach(card => {
+      const prColor = card.priority==='Urgent'?'background:#fef2f2;color:#dc2626':'background:#f3f2ef;color:#787774';
+      html += '<div class="notion-card"><div style="font-weight:500;margin-bottom:4px;color:#37352f;font-size:12px">'+card.title+'</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"><span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#ede9fe;color:#6d28d9">'+card.trip+'</span><span style="font-size:9px;padding:1px 5px;border-radius:3px;color:#2563eb;text-decoration:underline;cursor:pointer" title="Relation -- click to open component">'+card.component+'</span></div><div style="display:flex;gap:4px;margin-top:4px"><span style="font-size:9px;padding:1px 5px;border-radius:3px;'+prColor+'">'+card.priority+'</span><span style="font-size:9px;padding:1px 5px;border-radius:3px;background:#dbeafe;color:#1d4ed8">'+card.source+'</span></div></div>';
+    });
+    if(col.cards.length===0) html += '<div style="padding:20px 8px;text-align:center;color:#c8c8c4;font-size:11px">No tasks</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+  html += '<div style="margin-top:10px;padding:8px 12px;background:#1a1a30;border-radius:6px;font-size:11px;color:#60a5fa">New: Component is now a relation (not text) -- clicking opens the actual component record. Trip is also a relation for full context.</div>';
+  return html;
+}
+
+function renderCalendarMockup(){
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const trips = [
+    {name:'Swiss Alps',day:0,span:7,color:'#d1d5db',status:'Post Trip'},
+    {name:'Maldives',day:1,span:5,color:'#67e8f9',status:'On Trip'},
+    {name:'Safari',day:3,span:4,color:'#93c5fd',status:'Trip Identified'}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto;padding:16px">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:14px;font-weight:600;color:#37352f">March 2026</div><div style="display:flex;gap:8px"><button style="font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid #e3e2de;background:#fff;color:#787774;cursor:pointer">&lt; Prev</button><button style="font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid #e3e2de;background:#fff;color:#787774;cursor:pointer">Today</button><button style="font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid #e3e2de;background:#fff;color:#787774;cursor:pointer">Next &gt;</button></div></div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#e3e2de;border:1px solid #e3e2de;border-radius:6px;overflow:hidden">';
+  days.forEach(d => { html += '<div style="background:#f7f6f3;padding:6px 8px;font-size:10px;font-weight:600;color:#787774;text-align:center">'+d+'</div>'; });
+  for(let w=0;w<4;w++){
+    for(let d=0;d<7;d++){
+      const dayNum = w*7+d+1;
+      if(dayNum>31) { html += '<div style="background:#fff;padding:6px 8px;min-height:60px"></div>'; continue; }
+      let cellContent = '<div style="font-size:11px;color:#37352f;margin-bottom:4px">'+dayNum+'</div>';
+      trips.forEach(t => {
+        if(w===Math.floor(t.day/7) && d===t.day%7){
+          cellContent += '<div style="font-size:9px;padding:2px 4px;border-radius:2px;background:'+t.color+';color:#37352f;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+t.name+'</div>';
+        }
+      });
+      if(dayNum===15) cellContent += '<div style="font-size:9px;padding:2px 4px;border-radius:2px;background:#67e8f9;color:#37352f;margin-bottom:2px">Maldives (start)</div>';
+      if(dayNum===5) cellContent += '<div style="font-size:9px;padding:2px 4px;border-radius:2px;background:#93c5fd;color:#37352f;margin-bottom:2px">Safari (start)</div>';
+      html += '<div style="background:#fff;padding:6px 8px;min-height:60px">'+cellContent+'</div>';
+    }
+  }
+  html += '</div>';
+  html += '<div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">';
+  const legend = [{label:'Not Started',c:'#e5e7eb'},{label:'Trip Identified',c:'#93c5fd'},{label:'Outline',c:'#c4b5fd'},{label:'Itinerary Review',c:'#fcd34d'},{label:'Booking In Progress',c:'#fdba74'},{label:'Booking Complete',c:'#6ee7b7'},{label:'On Trip',c:'#67e8f9'},{label:'Post Trip',c:'#d1d5db'}];
+  legend.forEach(l => { html += '<span style="font-size:9px;display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:'+l.c+';display:inline-block"></span>'+l.label+'</span>'; });
+  html += '</div></div>';
+  return html;
 }
 
 // ============================================================
@@ -782,10 +854,12 @@ function renderCCContent(i){
 
 function renderCCTripDashboard(){
   const trips = [
-    {name:'Where Winter Glows',dest:'London, Paris',dates:'Nov 30 - Dec 9',status:'Itinerary Review',statusColor:'bg-amber-100 text-amber-700',advisor:'Sarah K.',members:3,pending:4},
-    {name:'Tokyo Reset',dest:'Tokyo, Kyoto',dates:'Jan 15 - Jan 24',status:'Outline',statusColor:'bg-purple-100 text-purple-700',advisor:'Sarah K.',members:2,pending:0},
-    {name:'Amalfi Dreams',dest:'Naples, Positano',dates:'Apr 20 - Apr 28',status:'Booking In Progress',statusColor:'bg-orange-100 text-orange-700',advisor:'Mike T.',members:4,pending:7},
-    {name:'Swiss Alps Escape',dest:'Zurich, Zermatt',dates:'Mar 5 - Mar 12',status:'Booking Complete',statusColor:'bg-emerald-100 text-emerald-700',advisor:'Sarah K.',members:2,pending:0}
+    {name:'Where Winter Glows',dest:'London, Paris',dates:'Nov 30 - Dec 9',status:'Itinerary Review',statusColor:'bg-amber-100 text-amber-700',advisor:'Mishal',members:3,pending:4},
+    {name:'Tokyo Reset',dest:'Tokyo, Kyoto',dates:'Jan 15 - Jan 24',status:'Outline',statusColor:'bg-purple-100 text-purple-700',advisor:'Sunthar',members:2,pending:0},
+    {name:'Amalfi Coast Anniversary',dest:'Amalfi Coast, Positano',dates:'Oct 10 - Oct 18',status:'Booking In Progress',statusColor:'bg-orange-100 text-orange-700',advisor:'Nirav',members:2,pending:3},
+    {name:'Greek Island Hop',dest:'Santorini, Mykonos',dates:'Sep 12 - Sep 22',status:'Booking Complete',statusColor:'bg-emerald-100 text-emerald-700',advisor:'Sunthar',members:2,pending:0},
+    {name:'Safari & Seychelles',dest:'Nairobi, Seychelles',dates:'Mar 5 - Mar 16',status:'Trip Identified',statusColor:'bg-blue-100 text-blue-700',advisor:'Mishal',members:3,pending:0},
+    {name:'Maldives Honeymoon',dest:'Maldives',dates:'Mar 15 - Mar 25',status:'On Trip',statusColor:'bg-cyan-100 text-cyan-700',advisor:'Mishal',members:2,pending:0}
   ];
 
   let rows = '';
@@ -794,7 +868,7 @@ function renderCCTripDashboard(){
   });
 
   return '<div class="panel mb-4"><div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Feature A: Trip Status Dashboard</div><div class="text-sm text-gray-400 mb-1">List/table of all active trips with status pipeline, advisor assignment, and pending action counts. One-click "Advance Status" with validation warnings.</div><div class="text-xs text-gray-500">Addresses gaps: Trip status transitions, Validation/guardrails</div></div>'
-    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Trip Status Dashboard</span><span class="cc-badge bg-gray-100 text-gray-600">4 active trips</span></div><div class="flex items-center gap-2"><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Statuses</option></select><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Advisors</option></select></div></div><div class="cc-body" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr class="bg-gray-50"><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Trip</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Dates</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Status</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Advisor</th><th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Members</th><th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Pending</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Trip Status Dashboard</span><span class="cc-badge bg-gray-100 text-gray-600">6 active trips</span></div><div class="flex items-center gap-2"><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Statuses</option></select><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Advisors</option></select></div></div><div class="cc-body" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr class="bg-gray-50"><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Trip</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Dates</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Status</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Advisor</th><th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Members</th><th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Pending</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 function renderCCComponentBoard(){
