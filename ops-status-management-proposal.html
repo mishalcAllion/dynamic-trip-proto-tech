@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Status Management — Proposal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui','sans-serif'],mono:['JetBrains Mono','monospace']}}}}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:#0f0f1a;color:#c8d4e4;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:#0f0f1a}
+::-webkit-scrollbar-thumb{background:#2a2a40;border-radius:2px}
+code,pre,.code-font{font-family:'JetBrains Mono',monospace}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:#0a0a14;border-right:1px solid #1e1e35;z-index:50;overflow-y:auto;padding:20px 0}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:#252540}
+.sidebar a.nav-link{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:14px;color:#9ca3af;text-decoration:none;transition:all .15s;border-left:2px solid transparent}
+.sidebar a.nav-link:hover{color:#c8d4e4;background:rgba(255,255,255,.03)}
+.sidebar a.nav-link.active{color:#80f0c8;border-left-color:#80f0c8;background:rgba(128,240,200,.05);font-weight:500}
+.sidebar a.nav-link.visited-link:not(.active){color:#b0b8c4}
+.main-content{margin-left:240px;padding:32px 48px 80px;max-width:1200px}
+.panel{background:#141425;border:1px solid #1e1e35;border-radius:12px;padding:28px;margin-bottom:16px}
+.section-title{font-size:28px;font-weight:700;color:#fff;margin-bottom:6px}
+.section-sub{font-size:15px;color:#9ca3af;margin-bottom:24px}
+.section-intro{background:#111122;border:1px solid #1e1e35;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#9ca3af;line-height:1.6}
+.tag{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:600;padding:2px 8px;border-radius:4px}
+.tag-high{background:rgba(244,63,94,.15);color:#fb7185}
+.tag-medium{background:rgba(245,158,11,.15);color:#fbbf24}
+.tag-low{background:rgba(52,211,153,.15);color:#34d399}
+.section-nav-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;margin-bottom:24px;border-bottom:1px solid #1e1e35}
+.section-nav-bar .current-section-name{font-size:13px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px}
+.section-nav-bar button{background:#1e1e35;border:1px solid #252540;color:#9ca3af;font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
+.section-nav-bar button:hover{background:#252540;color:#c8d4e4}
+.section-nav-bar button:disabled{opacity:.3;cursor:default}
+.progress-bar{height:2px;background:#1e1e35;border-radius:1px;margin:0}
+.progress-fill{height:100%;background:#80f0c8;border-radius:1px;transition:width .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page-section{animation:fadeIn .2s ease}
+.gap-row{cursor:pointer;transition:background .15s}
+.gap-row:hover{background:rgba(255,255,255,.02)}
+.gap-expand{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.gap-expand.open{max-height:200px}
+/* Notion mockup styles */
+.notion-board{background:#fff;border-radius:8px;padding:16px;font-family:'Inter',sans-serif;color:#37352f}
+.notion-col{background:#f7f6f3;border-radius:4px;min-width:150px;padding:8px}
+.notion-card{background:#fff;border:1px solid #e3e2de;border-radius:4px;padding:10px 12px;margin-bottom:6px;font-size:12px;box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:default;transition:box-shadow .15s}
+.notion-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.notion-table{width:100%;border-collapse:collapse;font-size:12px}
+.notion-table th{background:#f7f6f3;text-align:left;padding:8px 12px;font-weight:500;color:#787774;border-bottom:1px solid #e3e2de;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.notion-table td{padding:8px 12px;border-bottom:1px solid #ebebea;color:#37352f}
+.notion-table tr:hover{background:#f7f6f380}
+/* CC mockup styles */
+.cc-mock{background:#f9fafb;border-radius:12px;overflow:hidden;font-family:'Inter',sans-serif;color:#111827;border:1px solid #e5e7eb}
+.cc-header{background:#fff;border-bottom:1px solid #e5e7eb;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.cc-body{padding:20px}
+.cc-card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:all .15s}
+.cc-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:#d1d5db}
+.cc-btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:none}
+.cc-btn-primary{background:#111827;color:#fff}
+.cc-btn-primary:hover{background:#1f2937}
+.cc-btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
+.cc-btn-outline:hover{background:#f3f4f6}
+.cc-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;letter-spacing:.3px}
+/* Workflow step styles */
+.wf-step{padding:16px 20px;border-left:3px solid #252540;margin-left:20px;position:relative;cursor:pointer;transition:all .2s}
+.wf-step::before{content:'';position:absolute;left:-9px;top:18px;width:14px;height:14px;border-radius:50%;background:#252540;border:2px solid #1e1e35;transition:all .2s}
+.wf-step.wf-active{border-left-color:#80f0c8;background:rgba(128,240,200,.04);border-radius:0 8px 8px 0}
+.wf-step.wf-active::before{background:#80f0c8;border-color:#80f0c8;box-shadow:0 0 12px rgba(128,240,200,.4)}
+.wf-step.wf-done{border-left-color:#4a4a6a}
+.wf-step.wf-done::before{background:#4a4a6a;border-color:#4a4a6a}
+/* Kanban column for CC mockup */
+.kanban-col{min-width:160px;flex:1}
+.kanban-col-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;padding:8px 10px;display:flex;align-items:center;justify-content:space-between}
+.kanban-col-body{min-height:120px;padding:4px}
+/* Story card */
+.story-card{background:#141425;border:1px solid #1e1e35;border-radius:10px;padding:20px;margin-bottom:12px;transition:border-color .15s}
+.story-card:hover{border-color:#252540}
+/* Sizing toggle */
+.sz-toggle{display:inline-flex;background:#1e1e35;border-radius:6px;overflow:hidden;border:1px solid #252540}
+.sz-toggle button{padding:6px 16px;font-size:12px;color:#9ca3af;background:transparent;border:none;cursor:pointer;transition:all .15s}
+.sz-toggle button.active{background:#80f0c8;color:#0f0f1a;font-weight:600}
+@media(max-width:900px){.sidebar{display:none}.main-content{margin-left:0;padding:20px}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="px-5 mb-6">
+    <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Proposal</div>
+    <div class="text-sm font-semibold text-white leading-tight">Ops Status Management</div>
+    <div class="text-[10px] text-gray-500 mt-1">Dynamic Trip Page | Mar 2026</div>
+  </div>
+  <div class="mb-3 px-5 space-y-1">
+    <a href="dev-spec.html" class="text-[11px] text-gray-500 hover:text-gray-300 flex items-center gap-1.5 py-1" style="text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back to Dev Spec
+    </a>
+    <a href="index.html" class="text-[11px] text-gray-500 hover:text-gray-300 flex items-center gap-1.5 py-1" style="text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Back to Prototype
+    </a>
+  </div>
+  <div class="h-px bg-[#1e1e35] mx-5 mb-2"></div>
+  <div class="px-5 mb-2">
+    <div class="text-[10px] text-gray-500 mb-1" id="progress-text">0 / 7 sections viewed</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div class="h-px bg-[#1e1e35] mx-5 mb-3"></div>
+
+  <div class="px-5 mb-2"><div class="text-[9px] font-bold uppercase tracking-widest text-gray-600">Part 1: Notion Interim</div></div>
+  <a href="#gap-analysis" data-section="gap-analysis" class="nav-link active" onclick="showPage('gap-analysis');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">1.</span>Gap Analysis
+  </a>
+  <a href="#notion-views" data-section="notion-views" class="nav-link" onclick="showPage('notion-views');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">2.</span>Notion Views
+  </a>
+  <a href="#notion-automations" data-section="notion-automations" class="nav-link" onclick="showPage('notion-automations');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">3.</span>Automations
+  </a>
+  <a href="#daily-workflow" data-section="daily-workflow" class="nav-link" onclick="showPage('daily-workflow');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">4.</span>Daily Workflow
+  </a>
+
+  <div class="px-5 mb-2 mt-4"><div class="text-[9px] font-bold uppercase tracking-widest text-gray-600">Part 2: CC Features</div></div>
+  <a href="#cc-features" data-section="cc-features" class="nav-link" onclick="showPage('cc-features');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">5.</span>CC Features
+  </a>
+  <a href="#user-stories" data-section="user-stories" class="nav-link" onclick="showPage('user-stories');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">6.</span>User Stories
+  </a>
+  <a href="#sizing" data-section="sizing" class="nav-link" onclick="showPage('sizing');return false;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span class="opacity-50 text-xs font-mono mr-0.5">7.</span>Sizing
+  </a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main-content" id="main-content">
+
+<!-- HEADER -->
+<div class="mb-8">
+  <div class="flex items-center gap-3 mb-2">
+    <div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
+    <span class="text-[11px] font-semibold uppercase tracking-widest text-amber-400">Proposal</span>
+  </div>
+  <h1 class="text-4xl font-extrabold text-white mb-2">Ops Status Management</h1>
+  <p class="text-lg text-gray-400 mb-1">Notion Interim Solution + Command Center Feature Proposals</p>
+  <p class="text-sm text-gray-400">Dynamic Trip Page PRD v8.4 &middot; Ship Date: April 15, 2026</p>
+  <div class="flex gap-3 mt-4 flex-wrap">
+    <span class="tag tag-high">8 Workflow Gaps</span>
+    <span class="tag" style="background:rgba(147,221,255,.12);color:#93ddff">6 Notion Views</span>
+    <span class="tag" style="background:rgba(212,160,255,.12);color:#d4a0ff">5 CC Features</span>
+    <span class="tag" style="background:rgba(252,201,60,.12);color:#fcc93c">27-39 Dev Days</span>
+  </div>
+</div>
+
+<!-- SECTION NAV BAR -->
+<div class="section-nav-bar" id="section-nav-bar">
+  <button id="nav-prev-btn" onclick="navPrev()" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg> Prev</button>
+  <span class="current-section-name" id="current-section-name">1. Gap Analysis</span>
+  <button id="nav-next-btn" onclick="navNext()">Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
+
+<!-- ==================== SECTION 1: GAP ANALYSIS ==================== -->
+<section id="gap-analysis" data-page="gap-analysis" class="page-section">
+  <h2 class="section-title">Gap Analysis</h2>
+  <p class="section-sub">PRD specification vs. current tooling -- click any row to expand impact details</p>
+  <div class="section-intro">The Dynamic Trip Page PRD v8.4 defines 8 trip statuses, 6 component statuses, 4 comment statuses, and 4 client decision states -- all manually controlled by ops. This analysis identifies the gaps between what the PRD requires and what tooling exists today. Sunthar confirmed (Mar 13, 47:18): "For now, let's just say it's manually triggered by ops."</div>
+
+  <div class="panel" style="padding:0;overflow:hidden">
+    <div style="display:grid;grid-template-columns:1.2fr 1.3fr 1.3fr 80px;background:#111122;padding:14px 20px;border-bottom:1px solid #1e1e35;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+      <div>Workflow</div>
+      <div>PRD Spec</div>
+      <div>Current Tooling</div>
+      <div style="text-align:center">Risk</div>
+    </div>
+    <div id="gap-table"></div>
+  </div>
+
+  <div class="panel mt-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Summary</span>
+    </div>
+    <div class="grid grid-cols-3 gap-4 text-center">
+      <div class="bg-[#111122] rounded-lg p-4">
+        <div class="text-3xl font-bold text-rose-400 mb-1">5</div>
+        <div class="text-xs text-gray-500">HIGH risk gaps</div>
+      </div>
+      <div class="bg-[#111122] rounded-lg p-4">
+        <div class="text-3xl font-bold text-amber-400 mb-1">2</div>
+        <div class="text-xs text-gray-500">MEDIUM risk gaps</div>
+      </div>
+      <div class="bg-[#111122] rounded-lg p-4">
+        <div class="text-3xl font-bold text-emerald-400 mb-1">1</div>
+        <div class="text-xs text-gray-500">LOW risk gaps</div>
+      </div>
+    </div>
+    <p class="text-sm text-gray-400 mt-4 leading-relaxed">Without intervention, the ops team will be manually editing 250-750+ Notion database records daily with no validation, no batch operations, and no alerting. This analysis drives both the Notion interim solution (sections 2-4) and the Command Center feature proposals (sections 5-7).</p>
+  </div>
+</section>
+
+<!-- ==================== SECTION 2: NOTION VIEWS ==================== -->
+<section id="notion-views" data-page="notion-views" class="page-section hidden">
+  <h2 class="section-title">Notion Views Guide</h2>
+  <p class="section-sub">6 views to set up before Apr 15 launch -- visual mockups included</p>
+  <div class="section-intro">These Notion views are the ops team's day-1 tooling. Each view targets a specific workflow gap identified in the gap analysis. Set up all 6 views in a single "Ops Master Dashboard" page for one-stop access.</div>
+
+  <div class="flex gap-2 mb-6 flex-wrap" id="view-tabs"></div>
+  <div id="view-content"></div>
+</section>
+
+<!-- ==================== SECTION 3: NOTION AUTOMATIONS ==================== -->
+<section id="notion-automations" data-page="notion-automations" class="page-section hidden">
+  <h2 class="section-title">Notion Automations</h2>
+  <p class="section-sub">4 automation rules to reduce manual checking</p>
+  <div class="section-intro">These Notion database automations bridge the alerting gap. Instead of ops manually checking the Task Dashboard every few minutes, automations push notifications when members take actions. Set these up in each database's automation panel.</div>
+
+  <div class="panel" style="padding:0;overflow:hidden">
+    <div style="display:grid;grid-template-columns:1.3fr 1.5fr 1fr;background:#111122;padding:14px 20px;border-bottom:1px solid #1e1e35;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+      <div>Trigger</div>
+      <div>Action</div>
+      <div>Purpose</div>
+    </div>
+    <div id="auto-table"></div>
+  </div>
+
+  <div class="panel mt-4">
+    <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-3">Setup Instructions</div>
+    <div class="space-y-3 text-sm text-gray-400">
+      <div class="flex gap-3"><span class="text-blue-400 font-mono text-xs mt-0.5">01</span><span>Open each database (Components, Component Comments, Trips) in Notion</span></div>
+      <div class="flex gap-3"><span class="text-blue-400 font-mono text-xs mt-0.5">02</span><span>Click the lightning bolt icon (Automations) in the database toolbar</span></div>
+      <div class="flex gap-3"><span class="text-blue-400 font-mono text-xs mt-0.5">03</span><span>Click "New automation" and configure the trigger and action per the table above</span></div>
+      <div class="flex gap-3"><span class="text-blue-400 font-mono text-xs mt-0.5">04</span><span>For Slack integration: use Notion's built-in "Send Slack notification" action block</span></div>
+      <div class="flex gap-3"><span class="text-blue-400 font-mono text-xs mt-0.5">05</span><span>Test each automation by creating a sample record and verifying the task/notification appears</span></div>
+    </div>
+  </div>
+
+  <div class="panel mt-4">
+    <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3">Limitations</div>
+    <ul class="text-sm text-gray-400 space-y-2 list-disc list-inside">
+      <li>Notion automations cannot enforce forward-only state transitions -- ops can still set any status</li>
+      <li>Slack notifications are plain text only -- no interactive buttons or approval flows</li>
+      <li>Task creation adds records but does not assign or prioritize automatically</li>
+      <li>Automation 4 (suggest advancing) requires a formula field to check "all components booked" -- complex to maintain</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== SECTION 4: DAILY WORKFLOW ==================== -->
+<section id="daily-workflow" data-page="daily-workflow" class="page-section hidden">
+  <h2 class="section-title">Ops Daily Workflow</h2>
+  <p class="section-sub">Step-by-step guide using Notion views -- click each step to advance</p>
+  <div class="section-intro">This is the recommended daily workflow for ops advisors using the Notion interim solution. Each step maps to a specific Notion view. Click steps or use the Next/Prev buttons below to walk through the process.</div>
+
+  <div class="panel">
+    <div class="flex items-center justify-between mb-6">
+      <div class="text-xs font-bold uppercase tracking-wider text-emerald-400">Workflow Steps</div>
+      <div class="text-xs text-gray-500" id="wf-counter">Step 1 of 7</div>
+    </div>
+    <div id="wf-steps"></div>
+    <div class="flex items-center justify-between mt-6 pt-4 border-t border-[#1e1e35]">
+      <button onclick="wfPrev()" id="wf-prev-btn" class="text-xs px-4 py-2 bg-[#1e1e35] border border-[#252540] text-gray-400 rounded-md hover:text-gray-200 transition-colors disabled:opacity-30" disabled>Previous Step</button>
+      <button onclick="wfNext()" id="wf-next-btn" class="text-xs px-4 py-2 bg-[#1e1e35] border border-[#252540] text-gray-400 rounded-md hover:text-gray-200 transition-colors">Next Step</button>
+    </div>
+  </div>
+
+  <div class="panel mt-4" id="wf-detail-panel">
+    <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-3" id="wf-detail-title">Step Detail</div>
+    <div class="text-sm text-gray-400 leading-relaxed" id="wf-detail-body"></div>
+  </div>
+</section>
+
+<!-- ==================== SECTION 5: CC FEATURES ==================== -->
+<section id="cc-features" data-page="cc-features" class="page-section hidden">
+  <h2 class="section-title">CC Feature Proposals</h2>
+  <p class="section-sub">5 Command Center features to replace Notion interim tooling</p>
+  <div class="section-intro">These features build on the current Command Center platform (Next.js, Tailwind, Shadcn, Prisma) to provide proper ops tooling for trip status management. Mockups use the CC design system: light theme, Inter font, rounded components, emerald/rose/amber status colors.</div>
+
+  <div class="flex gap-2 mb-6 flex-wrap" id="cc-tabs"></div>
+  <div id="cc-content"></div>
+</section>
+
+<!-- ==================== SECTION 6: USER STORIES ==================== -->
+<section id="user-stories" data-page="user-stories" class="page-section hidden">
+  <h2 class="section-title">User Stories</h2>
+  <p class="section-sub">7 stories covering all proposed CC features</p>
+  <div class="section-intro">Each user story maps to one or more CC features proposed in Section 5. Acceptance criteria define the minimum bar for each story to be considered complete.</div>
+
+  <div id="stories-list"></div>
+</section>
+
+<!-- ==================== SECTION 7: SIZING ==================== -->
+<section id="sizing" data-page="sizing" class="page-section hidden">
+  <h2 class="section-title">Sizing &amp; Phasing</h2>
+  <p class="section-sub">Effort estimates and phased delivery recommendation</p>
+  <div class="section-intro">Estimates use Maestro's standard: 1 point = 1 day. Toggle between optimistic and pessimistic estimates. Phase 1 (P0 features) targets the sprint immediately following Dynamic Trip launch. Phase 2 (P1 features) follows in the next sprint.</div>
+
+  <div class="flex items-center gap-4 mb-6">
+    <span class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Estimate Mode:</span>
+    <div class="sz-toggle" id="sz-toggle">
+      <button class="active" onclick="setSzMode('optimistic')">Optimistic</button>
+      <button onclick="setSzMode('pessimistic')">Pessimistic</button>
+    </div>
+  </div>
+
+  <div class="panel" style="padding:0;overflow:hidden" id="sz-table-wrap"></div>
+
+  <div class="grid grid-cols-2 gap-4 mt-4">
+    <div class="panel">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Phase 1 -- P0</span>
+      </div>
+      <div class="text-sm text-gray-400 mb-2">Trip Dashboard + Component Board + Action Queue</div>
+      <div class="text-2xl font-bold text-white mb-1" id="ph1-total">19-27 days</div>
+      <div class="text-xs text-gray-500">Target: Sprint following Dynamic Trip launch</div>
+      <div class="mt-3 text-xs text-gray-500">Covers the 5 HIGH-risk gaps from the gap analysis. Eliminates raw Notion editing for trip/component status, adds real-time member action alerting.</div>
+    </div>
+    <div class="panel">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">Phase 2 -- P1</span>
+      </div>
+      <div class="text-sm text-gray-400 mb-2">Finalization Checklist + Comment Management</div>
+      <div class="text-2xl font-bold text-white mb-1" id="ph2-total">8-12 days</div>
+      <div class="text-xs text-gray-500">Target: Sprint after Phase 1</div>
+      <div class="mt-3 text-xs text-gray-500">Addresses the 2 MEDIUM-risk gaps. Adds validation guardrails for trip finalization and centralized comment management.</div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /main-content -->
+
+<script>
+// ============================================================
+// NAVIGATION
+// ============================================================
+const pageOrder = ['gap-analysis','notion-views','notion-automations','daily-workflow','cc-features','user-stories','sizing'];
+const pageNames = ['Gap Analysis','Notion Views','Automations','Daily Workflow','CC Features','User Stories','Sizing'];
+let currentPageIdx = 0;
+const visitedPages = new Set();
+
+function showPage(sectionId) {
+  const idx = pageOrder.indexOf(sectionId);
+  if (idx === -1) return;
+  currentPageIdx = idx;
+  visitedPages.add(sectionId);
+  document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+  const target = document.querySelector('[data-page="'+sectionId+'"]');
+  if (target) { target.classList.remove('hidden'); target.style.animation='none'; target.offsetHeight; target.style.animation=''; }
+  document.querySelectorAll('.sidebar a.nav-link').forEach(l => l.classList.remove('active'));
+  const activeLink = document.querySelector('.sidebar a[data-section="'+sectionId+'"]');
+  if (activeLink) activeLink.classList.add('active');
+  visitedPages.forEach(vid => {
+    const vlink = document.querySelector('.sidebar a[data-section="'+vid+'"]');
+    if (vlink && !vlink.classList.contains('active')) vlink.classList.add('visited-link');
+  });
+  document.getElementById('main-content').scrollTo({top:0,behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'smooth'});
+  history.replaceState(null,'','#'+sectionId);
+  document.getElementById('current-section-name').textContent = (idx+1)+'. '+pageNames[idx];
+  document.getElementById('nav-prev-btn').disabled = (idx===0);
+  document.getElementById('nav-next-btn').disabled = (idx===pageOrder.length-1);
+  updateProgress();
+}
+function navPrev(){ if(currentPageIdx>0) showPage(pageOrder[currentPageIdx-1]); }
+function navNext(){ if(currentPageIdx<pageOrder.length-1) showPage(pageOrder[currentPageIdx+1]); }
+function updateProgress(){
+  const c=visitedPages.size, t=pageOrder.length;
+  document.getElementById('progress-text').textContent=c+' / '+t+' sections viewed';
+  document.getElementById('progress-fill').style.width=(c/t*100)+'%';
+}
+
+// ============================================================
+// SECTION 1: GAP ANALYSIS
+// ============================================================
+const gapData = [
+  {workflow:'Trip status transitions',spec:'Manual, forward-only, 8 states',current:'Raw Notion DB editing',risk:'HIGH',
+   impact:'With 50+ active trips, ops must open each trip record individually to change a select dropdown. No forward-only enforcement means a trip could accidentally be moved backward (e.g., "Booking Complete" back to "Outline"), creating downstream confusion. At scale, trip status updates alone consume ~45 min daily.'},
+  {workflow:'Component client-facing status',spec:'Manual, 6 states',current:'Raw Notion DB editing',risk:'HIGH',
+   impact:'With 5-15 components per trip and 50+ active trips, ops manually edits 250-750 Notion records. One wrong status (e.g., "Booked" before confirmation number entered) creates a client-facing error visible in the mobile app. Estimated ~3-4 hours daily just on component status updates.'},
+  {workflow:'Comment status management',spec:'Manual, 4 states (New / In Progress / Resolved / Won\'t Do)',current:'Raw Notion DB editing',risk:'MEDIUM',
+   impact:'Comments without status tracking fall through the cracks. A client question marked "New" that never gets moved to "In Progress" means no one is working on it. Without a filtered view, ops must scroll through all comments to find unresolved ones.'},
+  {workflow:'Member action alerts',spec:'Auto-create tasks when members approve/decline/comment',current:'Must check Task Dashboard manually',risk:'HIGH',
+   impact:'When a member approves a component at 2 AM, ops won\'t know until they manually open the Task Dashboard. No push notification, no Slack alert, no badge. SLA for member response could be missed by hours. With multiple members across trips, critical actions get buried.'},
+  {workflow:'Trip finalization',spec:'Manual -- enter confirmation numbers for all booked components',current:'Field-by-field editing in Notion',risk:'MEDIUM',
+   impact:'Before marking a trip "Booking Complete", ops must verify every component has a confirmation number. Currently requires opening each component record individually. Missing a conf number means the client sees "Booked" without booking details -- erodes trust.'},
+  {workflow:'Trip page type selection',spec:'Manual -- select Dynamic/Notion/Custom per trip',current:'Notion select field (already exists)',risk:'LOW',
+   impact:'This workflow already works via Notion select field. The only gap is that there\'s no validation preventing selection of "Dynamic" for trips that don\'t have component data populated. Low risk because page type is set once during trip setup.'},
+  {workflow:'Batch status updates',spec:'Implied by scale (50+ trips, 250-750 records)',current:'Not possible -- one record at a time',risk:'HIGH',
+   impact:'When a trip moves from "Booking In Progress" to "Booking Complete", all 10-15 components should move to "Booked" simultaneously. Currently, ops must update each component individually -- 15 clicks, 15 dropdown changes, 15 saves. Takes 10-15 minutes per trip, multiplied across active trips.'},
+  {workflow:'Validation / guardrails',spec:'Implied -- forward-only states, required fields',current:'None -- any state change allowed',risk:'HIGH',
+   impact:'Nothing prevents ops from moving a trip to "Booking Complete" when 3 components still have no decision. Nothing prevents setting "Booked" without a confirmation number. Nothing prevents skipping "Itinerary Review" entirely. Every validation gap is a potential client-facing error.'}
+];
+
+function renderGapTable(){
+  const el = document.getElementById('gap-table');
+  let html = '';
+  gapData.forEach((g,i) => {
+    const riskClass = g.risk==='HIGH'?'tag-high':g.risk==='MEDIUM'?'tag-medium':'tag-low';
+    html += '<div class="gap-row" onclick="toggleGap('+i+')" style="display:grid;grid-template-columns:1.2fr 1.3fr 1.3fr 80px;padding:14px 20px;border-bottom:1px solid #1a1a30;align-items:center">';
+    html += '<div class="text-sm text-white font-medium flex items-center gap-2"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-600 transition-transform" id="gap-chevron-'+i+'" style="flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>'+g.workflow+'</div>';
+    html += '<div class="text-sm text-gray-400">'+g.spec+'</div>';
+    html += '<div class="text-sm text-gray-400">'+g.current+'</div>';
+    html += '<div style="text-align:center"><span class="tag '+riskClass+'">'+g.risk+'</span></div>';
+    html += '</div>';
+    html += '<div class="gap-expand" id="gap-expand-'+i+'" style="border-bottom:1px solid #1a1a30"><div style="padding:12px 20px 16px 44px;background:#111122"><p class="text-sm text-gray-400 leading-relaxed">'+g.impact+'</p></div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function toggleGap(i){
+  const expand = document.getElementById('gap-expand-'+i);
+  const chevron = document.getElementById('gap-chevron-'+i);
+  const isOpen = expand.classList.contains('open');
+  // Close all first
+  document.querySelectorAll('.gap-expand').forEach(e => e.classList.remove('open'));
+  document.querySelectorAll('[id^="gap-chevron-"]').forEach(c => c.style.transform='rotate(0deg)');
+  if(!isOpen){
+    expand.classList.add('open');
+    chevron.style.transform='rotate(90deg)';
+  }
+}
+
+// ============================================================
+// SECTION 2: NOTION VIEWS
+// ============================================================
+const viewData = [
+  {name:'Trip Status Pipeline',db:'Trips',type:'Board (Kanban)',groupBy:'Trip Status',
+   config:'Columns: 8 status columns | Filter: Status != Post Trip | Show: Trip name, destinations, start date | Sort: Start date ascending',
+   id:'view-pipeline'},
+  {name:'Component Status Board',db:'Components',type:'Board (Kanban)',groupBy:'Client-Facing Status',
+   config:'Columns: 6 status columns | Filter: Trip = [selected trip] | Show: Name, category icon, client decision | Sort: Display order',
+   id:'view-components'},
+  {name:'Member Actions Feed',db:'Task Dashboard',type:'Table',groupBy:'N/A',
+   config:'Filter: Source = "Member Action", Created within 7 days | Sort: Created time (newest) | Show: Title, Trip, Component, Status, Priority, Created',
+   id:'view-actions'},
+  {name:'Unresolved Comments',db:'Component Comments',type:'Table',groupBy:'N/A',
+   config:'Filter: Status != Resolved AND Status != Won\'t Do | Sort: Created time (newest) | Show: Comment, Component, Comment Type, Status',
+   id:'view-comments'},
+  {name:'Trip Finalization Checklist',db:'Components',type:'Table',groupBy:'N/A',
+   config:'Filter: Trip = [selected trip] | Sort: Display order | Show: Name, Category, Client Decision, Client-Facing Status, Conf Number',
+   id:'view-finalization'},
+  {name:'Ops Master Dashboard',db:'Linked Databases (page)',type:'Dashboard Page',groupBy:'N/A',
+   config:'Embeds: Trip Status Pipeline + Member Actions Feed + Unresolved Comments as linked database views on a single Notion page',
+   id:'view-dashboard'}
+];
+
+let currentView = 0;
+
+function renderViewTabs(){
+  const el = document.getElementById('view-tabs');
+  let html = '';
+  viewData.forEach((v,i) => {
+    html += '<button onclick="showView('+i+')" class="text-xs px-3 py-1.5 rounded-md transition-all border '+(i===0?'bg-[#1e1e35] text-[#c8d4e4] border-[#252540]':'text-gray-500 border-transparent hover:text-gray-300')+'" id="vtab-'+i+'">'+v.name+'</button>';
+  });
+  el.innerHTML = html;
+}
+
+function showView(i){
+  currentView = i;
+  document.querySelectorAll('[id^="vtab-"]').forEach(t => {t.className='text-xs px-3 py-1.5 rounded-md transition-all border text-gray-500 border-transparent hover:text-gray-300';});
+  document.getElementById('vtab-'+i).className='text-xs px-3 py-1.5 rounded-md transition-all border bg-[#1e1e35] text-[#c8d4e4] border-[#252540]';
+  renderViewContent(i);
+}
+
+function renderViewContent(i){
+  const v = viewData[i];
+  const el = document.getElementById('view-content');
+  let mockup = '';
+  if(i===0) mockup = renderPipelineMockup();
+  else if(i===1) mockup = renderComponentBoardMockup();
+  else if(i===2) mockup = renderActionsFeedMockup();
+  else if(i===3) mockup = renderCommentsMockup();
+  else if(i===4) mockup = renderFinalizationMockup();
+  else if(i===5) mockup = renderDashboardMockup();
+
+  el.innerHTML = '<div class="panel mb-4"><div class="grid grid-cols-4 gap-4 mb-4">'
+    +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Database</div><div class="text-sm text-white">'+v.db+'</div></div>'
+    +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">View Type</div><div class="text-sm text-white">'+v.type+'</div></div>'
+    +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Group By</div><div class="text-sm text-white">'+v.groupBy+'</div></div>'
+    +'<div><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">View #</div><div class="text-sm text-white">'+(i+1)+' of 6</div></div>'
+    +'</div><div class="text-xs text-gray-400 leading-relaxed bg-[#111122] rounded-lg p-3">'+v.config+'</div></div>'
+    +'<div class="panel" style="padding:16px"><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Visual Mockup</div>'+mockup+'</div>';
+}
+
+function renderPipelineMockup(){
+  const cols = [
+    {name:'Not Started',color:'#e5e7eb',cards:[]},
+    {name:'Trip Identified',color:'#93c5fd',cards:[]},
+    {name:'Outline',color:'#c4b5fd',cards:[{name:'Tokyo Reset',dest:'Tokyo, Kyoto',date:'Jan 15 - Jan 24',travelers:'2'}]},
+    {name:'Itinerary Review',color:'#fcd34d',cards:[{name:'Where Winter Glows',dest:'London, Paris',date:'Nov 30 - Dec 9',travelers:'3'}]},
+    {name:'Booking In Progress',color:'#fdba74',cards:[]},
+    {name:'Booking Complete',color:'#6ee7b7',cards:[]},
+    {name:'On Trip',color:'#67e8f9',cards:[]},
+    {name:'Post Trip',color:'#d1d5db',cards:[]}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:1000px">';
+  cols.forEach(col => {
+    html += '<div class="notion-col" style="flex:1;min-width:120px">';
+    html += '<div style="font-size:11px;font-weight:600;color:#787774;padding:6px 8px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:'+col.color+';display:inline-block"></span>'+col.name+' <span style="color:#b4b4b0;font-weight:400">'+col.cards.length+'</span></div>';
+    col.cards.forEach(card => {
+      html += '<div class="notion-card"><div style="font-weight:500;margin-bottom:4px;color:#37352f">'+card.name+'</div><div style="color:#787774;font-size:11px">'+card.dest+'</div><div style="color:#9b9b97;font-size:10px;margin-top:4px">'+card.date+' &middot; '+card.travelers+' travelers</div></div>';
+    });
+    if(col.cards.length===0) html += '<div style="padding:20px 8px;text-align:center;color:#c8c8c4;font-size:11px">No trips</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function renderComponentBoardMockup(){
+  const cols = [
+    {name:'Working on it',color:'#a78bfa',cards:[{name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending'}]},
+    {name:'Need your input',color:'#fbbf24',cards:[{name:'Tower of London Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending'}]},
+    {name:'Ready for approval',color:'#60a5fa',cards:[
+      {name:'AUS -> LHR Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Approved'},
+      {name:'Corinthia London',cat:'HOTEL',icon:'&#127976;',decision:'Pending'},
+      {name:'The Ritz London',cat:'HOTEL',icon:'&#127976;',decision:'Declined'}
+    ]},
+    {name:'On hold',color:'#9ca3af',cards:[]},
+    {name:'Confirmed',color:'#34d399',cards:[{name:'Le Jules Verne',cat:'DINING',icon:'&#127860;',decision:'Approved'}]},
+    {name:'Booked',color:'#10b981',cards:[]}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:900px">';
+  cols.forEach(col => {
+    html += '<div class="notion-col" style="flex:1;min-width:140px">';
+    html += '<div style="font-size:11px;font-weight:600;color:#787774;padding:6px 8px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:'+col.color+';display:inline-block"></span>'+col.name+' <span style="color:#b4b4b0;font-weight:400">'+col.cards.length+'</span></div>';
+    col.cards.forEach(card => {
+      const dColor = card.decision==='Approved'?'#16a34a':card.decision==='Declined'?'#dc2626':'#d97706';
+      const dBg = card.decision==='Approved'?'#dcfce7':card.decision==='Declined'?'#fef2f2':'#fef9c3';
+      html += '<div class="notion-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span>'+card.icon+'</span><span style="font-weight:500;color:#37352f">'+card.name+'</span></div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#f3f2ef;color:#787774">'+card.cat+'</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+dBg+';color:'+dColor+'">'+card.decision+'</span></div></div>';
+    });
+    if(col.cards.length===0) html += '<div style="padding:20px 8px;text-align:center;color:#c8c8c4;font-size:11px">No components</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function renderActionsFeedMockup(){
+  const rows = [
+    {title:'AUS->LHR -- Approved by John D.',trip:'Where Winter Glows',component:'AUS->LHR Flight',status:'New',priority:'High',created:'2 min ago',isNew:true},
+    {title:'The Ritz London -- Declined by John D.',trip:'Where Winter Glows',component:'The Ritz London',status:'New',priority:'High',created:'5 min ago',isNew:true},
+    {title:'Corinthia London -- New comment from John D.',trip:'Where Winter Glows',component:'Corinthia London',status:'New',priority:'Medium',created:'12 min ago',isNew:true},
+    {title:'Le Jules Verne -- New comment from Susan U.',trip:'Where Winter Glows',component:'Le Jules Verne',status:'In Progress',priority:'Medium',created:'1 hr ago',isNew:false}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto"><table class="notion-table"><thead><tr><th>Title</th><th>Trip</th><th>Component</th><th>Status</th><th>Priority</th><th>Created</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    const statusColor = r.status==='New'?'background:#dbeafe;color:#1d4ed8':'background:#fef3c7;color:#92400e';
+    const border = r.isNew?'border-left:3px solid #3b82f6':'border-left:3px solid transparent';
+    html += '<tr style="'+border+'"><td style="font-weight:500">'+r.title+'</td><td>'+r.trip+'</td><td>'+r.component+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+statusColor+'">'+r.status+'</span></td><td>'+r.priority+'</td><td style="color:#9b9b97">'+r.created+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function renderCommentsMockup(){
+  const rows = [
+    {comment:'Can we get a room with a Thames view?',component:'Corinthia London',type:'Client',status:'New',isFirst:true,threadCount:4},
+    {comment:'Absolutely! I\'ve noted the Thames-view penthouse suite.',component:'Corinthia London',type:'Maestro',status:'In Progress',isFirst:false},
+    {comment:'Is late check-in possible? We arrive around 11 PM.',component:'Corinthia London',type:'Client',status:'New',isFirst:false},
+    {comment:'Also, can you arrange airport transfer from Heathrow?',component:'Corinthia London',type:'Client',status:'New',isFirst:false},
+    {comment:'Any vegetarian options at Le Jules Verne?',component:'Le Jules Verne',type:'Client',status:'In Progress',isFirst:true,threadCount:2},
+    {comment:'My wife has a shellfish allergy -- please flag this',component:'Le Jules Verne',type:'Client',status:'New',isFirst:false},
+    {comment:'Client prefers window seat',component:'AUS->LHR Flight',type:'Internal',status:'New',isFirst:true,threadCount:2},
+    {comment:'Checked availability -- 2A and 2K both window, recommending 2A',component:'AUS->LHR Flight',type:'Internal',status:'New',isFirst:false}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto">';
+  html += '<div style="margin-bottom:10px;font-size:11px;color:#787774;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#787774" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h6"/></svg>Filtered: Status is not Resolved and Status is not Won\'t Do | Sorted by: Component, then Created time</div>';
+  html += '<table class="notion-table"><thead><tr><th>Comment</th><th>Component</th><th>Type</th><th>Status</th></tr></thead><tbody>';
+  rows.forEach((r,i) => {
+    const statusStyle = r.status==='New'?'background:#dbeafe;color:#1d4ed8':'background:#fef3c7;color:#92400e';
+    const typeStyle = r.type==='Client'?'background:#ede9fe;color:#6d28d9':r.type==='Internal'?'background:#f3f4f6;color:#6b7280':'background:#dcfce7;color:#16a34a';
+    const componentCell = r.isFirst
+      ? '<span style="font-weight:600;color:#37352f">'+r.component+'</span> <span style="font-size:10px;color:#787774;background:#f3f2ef;padding:1px 6px;border-radius:3px;margin-left:4px">'+r.threadCount+' comments</span>'
+      : '<span style="color:#b0ada8;padding-left:12px;border-left:2px solid #e3e2de">'+r.component+'</span>';
+    const topBorder = r.isFirst && i>0?'border-top:2px solid #e3e2de;':'';
+    html += '<tr style="'+topBorder+'"><td style="font-weight:500;max-width:300px;'+(r.isFirst?'':'color:#4b4a48;')+'">'+r.comment+'</td><td>'+componentCell+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+typeStyle+'">'+r.type+'</span></td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;'+statusStyle+'">'+r.status+'</span></td></tr>';
+  });
+  html += '</tbody></table>';
+  html += '<div style="margin-top:10px;padding:10px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:11px;color:#92400e;display:flex;align-items:center;gap:6px"><strong>Note:</strong> Multiple comments per component are common -- Corinthia London has 4 active comments across 2 threads. Group by Component to see related comments together.</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderFinalizationMockup(){
+  const rows = [
+    {name:'AUS -> LHR Flight',cat:'FLIGHT',decision:'Approved',decOk:true,status:'Ready for approval',conf:'',confOk:false},
+    {name:'Corinthia London',cat:'HOTEL',decision:'Pending',decOk:false,status:'Ready for approval',conf:'',confOk:false},
+    {name:'The Ritz London',cat:'HOTEL',decision:'Declined',decOk:true,status:'Ready for approval',conf:'',confOk:false},
+    {name:'Tower of London Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Need your input',conf:'',confOk:false},
+    {name:'Eurostar to Paris',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
+    {name:'Le Jules Verne',cat:'DINING',decision:'Approved',decOk:true,status:'Confirmed',conf:'JV-2026-1234',confOk:true}
+  ];
+  let html = '<div class="notion-board" style="overflow-x:auto"><table class="notion-table"><thead><tr><th>Name</th><th>Category</th><th>Client Decision</th><th>Status</th><th>Conf Number</th></tr></thead><tbody>';
+  rows.forEach(r => {
+    const decIcon = r.decision==='Approved'?'<span style="color:#16a34a;margin-right:4px">&#10003;</span>':r.decision==='Declined'?'<span style="color:#dc2626;margin-right:4px">&#10005;</span>':'<span style="color:#d97706;margin-right:4px">&#9679;</span>';
+    const confCell = r.confOk?'<span style="color:#16a34a">'+r.conf+'</span>':'<span style="color:#dc2626;font-style:italic">Missing</span>';
+    html += '<tr><td style="font-weight:500">'+r.name+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;background:#f3f2ef;color:#787774">'+r.cat+'</span></td><td>'+decIcon+r.decision+'</td><td>'+r.status+'</td><td>'+confCell+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += '<div style="margin-top:12px;padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:#991b1b"><strong>Blockers:</strong> 3 components have no decision. 5 components missing confirmation number. 0 of 6 components in "Booked" status. This trip is NOT ready for "Booking Complete".</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderDashboardMockup(){
+  return '<div class="notion-board" style="padding:20px">'
+    +'<div style="font-size:18px;font-weight:700;color:#37352f;margin-bottom:16px">Ops Master Dashboard</div>'
+    +'<div style="color:#787774;font-size:13px;margin-bottom:20px">Bookmark this page -- start each day here.</div>'
+    +'<div style="margin-bottom:24px"><div style="font-size:13px;font-weight:600;color:#37352f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:1px;background:#fcd34d;display:inline-block"></span>Trip Status Pipeline</div><div style="background:#f7f6f3;border-radius:6px;padding:12px;font-size:12px;color:#787774;text-align:center;border:1px solid #e3e2de">Linked Board view -- Trips DB grouped by status (see View 1)</div></div>'
+    +'<div style="margin-bottom:24px"><div style="font-size:13px;font-weight:600;color:#37352f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:1px;background:#3b82f6;display:inline-block"></span>Member Actions Feed</div><div style="background:#f7f6f3;border-radius:6px;padding:12px;font-size:12px;color:#787774;text-align:center;border:1px solid #e3e2de">Linked Table view -- Task Dashboard sorted by created time (see View 3)</div></div>'
+    +'<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:600;color:#37352f;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:1px;background:#ef4444;display:inline-block"></span>Unresolved Comments</div><div style="background:#f7f6f3;border-radius:6px;padding:12px;font-size:12px;color:#787774;text-align:center;border:1px solid #e3e2de">Linked Table view -- Comments filtered to New/In Progress (see View 4)</div></div>'
+    +'</div>';
+}
+
+// ============================================================
+// SECTION 3: AUTOMATIONS
+// ============================================================
+const autoData = [
+  {trigger:'New Component Comment where Comment Type = "Client"',action:'Create task in Task Dashboard: "[Component Name] -- New comment from [Member Name]"',purpose:'Alert ops immediately when a member posts a comment on any component'},
+  {trigger:'Component "Client Decision" property changes',action:'Create task in Task Dashboard: "[Component Name] -- [Decision] by [Member Name]"',purpose:'Alert ops when a member approves, declines, or provides feedback on a component'},
+  {trigger:'Trip "Trip Status" property changes',action:'Post to Slack #trip-updates channel: "[Trip Name] status changed to [New Status]"',purpose:'Team-wide visibility on trip progress without checking Notion'},
+  {trigger:'All components in a trip have Status = "Booked" AND Decision = "Approved"',action:'Add a callout/reminder to the trip page: "All components booked -- consider advancing to Booking Complete"',purpose:'Reduce manual checking by surfacing when a trip is ready to advance'}
+];
+
+function renderAutoTable(){
+  const el = document.getElementById('auto-table');
+  let html = '';
+  autoData.forEach((a,i) => {
+    html += '<div style="display:grid;grid-template-columns:1.3fr 1.5fr 1fr;padding:14px 20px;border-bottom:1px solid #1a1a30;align-items:start">';
+    html += '<div class="text-sm text-white">'+a.trigger+'</div>';
+    html += '<div class="text-sm text-gray-400 font-mono" style="font-size:12px">'+a.action+'</div>';
+    html += '<div class="text-sm text-gray-400">'+a.purpose+'</div>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+// ============================================================
+// SECTION 4: DAILY WORKFLOW
+// ============================================================
+const wfSteps = [
+  {title:'Open Ops Master Dashboard',detail:'Navigate to the bookmarked Ops Master Dashboard page in Notion. This single page embeds the Trip Status Pipeline, Member Actions Feed, and Unresolved Comments as linked database views. This is your "home screen" for the day.',view:'View 6: Ops Master Dashboard',time:'~1 min'},
+  {title:'Check Member Actions Feed',detail:'Scan the Member Actions Feed table for any new tasks created overnight. New items have a blue left border and "New" status badge. Look for: approval decisions (approve/decline), new comments from members, and feedback submissions. Sort by created time to see the most recent first.',view:'View 3: Member Actions Feed',time:'~5 min'},
+  {title:'Process unresolved comments',detail:'Switch to the Unresolved Comments section. Work through comments top-down (newest first). For each comment: read the member\'s question, post a response in Notion (creates a Maestro-type comment), and change the comment status from "New" to "In Progress" (if working on it) or "Resolved" (if answered).',view:'View 4: Unresolved Comments',time:'~15-30 min'},
+  {title:'Review Trip Status Pipeline',detail:'Open the Trip Status Pipeline board view. Scan across columns to identify which trips need status advancement. Focus on trips in "Itinerary Review" and "Booking In Progress" columns -- these are the most action-heavy states. Note any trips that have been in the same status for more than 3 days.',view:'View 1: Trip Status Pipeline',time:'~5 min'},
+  {title:'Verify component readiness',detail:'For each trip you want to advance: open the trip page and check the Component Status Board (View 2). Verify that all components are in the expected status for the next trip state. For example, before moving to "Booking Complete", all components should be in "Booked" status with confirmation numbers.',view:'View 2: Component Status Board',time:'~10 min per trip'},
+  {title:'Run Finalization Checklist',detail:'Before advancing any trip to "Booking Complete", open the Finalization Checklist view (View 5) filtered to that specific trip. Check: (1) All approved components have confirmation numbers. (2) All components are in "Booked" status. (3) No "Pending" decisions remain. (4) No unresolved comments. If any check fails, do NOT advance the trip -- resolve the blockers first.',view:'View 5: Trip Finalization Checklist',time:'~5 min per trip'},
+  {title:'Advance trip status',detail:'Once all checks pass, return to the Trip Status Pipeline board and drag the trip card from its current column to the next status column. The Notion automation (Automation 3) will post a Slack notification to #trip-updates, giving the whole team visibility. Repeat steps 5-7 for each trip that needs advancement.',view:'View 1: Trip Status Pipeline',time:'~1 min per trip'}
+];
+
+let currentWfStep = 0;
+
+function renderWfSteps(){
+  const el = document.getElementById('wf-steps');
+  let html = '';
+  wfSteps.forEach((s,i) => {
+    const cls = i===0?'wf-active':i<0?'wf-done':'';
+    html += '<div class="wf-step '+cls+'" id="wf-step-'+i+'" onclick="goToWfStep('+i+')">';
+    html += '<div class="flex items-center justify-between"><div class="text-sm font-medium '+(i===0?'text-white':'text-gray-400')+'"><span class="text-xs font-mono text-gray-500 mr-2">'+(i+1)+'.</span>'+s.title+'</div>';
+    html += '<div class="text-[10px] text-gray-600">'+s.time+'</div></div>';
+    html += '<div class="text-xs text-gray-500 mt-1">'+s.view+'</div>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+  updateWfDetail();
+}
+
+function goToWfStep(i){
+  currentWfStep = i;
+  wfSteps.forEach((_,j) => {
+    const step = document.getElementById('wf-step-'+j);
+    step.className = 'wf-step '+(j===i?'wf-active':j<i?'wf-done':'');
+    step.querySelector('.text-sm').className = 'text-sm font-medium '+(j===i?'text-white':'text-gray-400');
+  });
+  document.getElementById('wf-counter').textContent = 'Step '+(i+1)+' of '+wfSteps.length;
+  document.getElementById('wf-prev-btn').disabled = (i===0);
+  document.getElementById('wf-next-btn').disabled = (i===wfSteps.length-1);
+  updateWfDetail();
+}
+function wfPrev(){ if(currentWfStep>0) goToWfStep(currentWfStep-1); }
+function wfNext(){ if(currentWfStep<wfSteps.length-1) goToWfStep(currentWfStep+1); }
+
+function updateWfDetail(){
+  const s = wfSteps[currentWfStep];
+  document.getElementById('wf-detail-title').textContent = 'Step '+(currentWfStep+1)+': '+s.title;
+  document.getElementById('wf-detail-body').textContent = s.detail;
+}
+
+// ============================================================
+// SECTION 5: CC FEATURES
+// ============================================================
+const ccFeatures = [
+  {name:'A: Trip Dashboard',priority:'P0',id:'cc-trip-dashboard'},
+  {name:'B: Component Board',priority:'P0',id:'cc-component-board'},
+  {name:'C: Action Queue',priority:'P0',id:'cc-action-queue'},
+  {name:'D: Finalization',priority:'P1',id:'cc-finalization'},
+  {name:'E: Comments Panel',priority:'P1',id:'cc-comments'}
+];
+
+let currentCC = 0;
+
+function renderCCTabs(){
+  const el = document.getElementById('cc-tabs');
+  let html = '';
+  ccFeatures.forEach((f,i) => {
+    const pColor = f.priority==='P0'?'bg-emerald-500/20 text-emerald-400':'bg-amber-500/20 text-amber-400';
+    html += '<button onclick="showCC('+i+')" class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-md transition-all border '+(i===0?'bg-[#1e1e35] text-[#c8d4e4] border-[#252540]':'text-gray-500 border-transparent hover:text-gray-300')+'" id="cctab-'+i+'"><span class="tag '+pColor+'" style="font-size:9px">'+f.priority+'</span>'+f.name+'</button>';
+  });
+  el.innerHTML = html;
+}
+
+function showCC(i){
+  currentCC = i;
+  document.querySelectorAll('[id^="cctab-"]').forEach(t => {t.className='flex items-center gap-2 text-xs px-3 py-1.5 rounded-md transition-all border text-gray-500 border-transparent hover:text-gray-300';});
+  document.getElementById('cctab-'+i).className='flex items-center gap-2 text-xs px-3 py-1.5 rounded-md transition-all border bg-[#1e1e35] text-[#c8d4e4] border-[#252540]';
+  renderCCContent(i);
+}
+
+function renderCCContent(i){
+  const el = document.getElementById('cc-content');
+  if(i===0) el.innerHTML = renderCCTripDashboard();
+  else if(i===1) el.innerHTML = renderCCComponentBoard();
+  else if(i===2) el.innerHTML = renderCCActionQueue();
+  else if(i===3) el.innerHTML = renderCCFinalization();
+  else if(i===4) el.innerHTML = renderCCComments();
+}
+
+function renderCCTripDashboard(){
+  const trips = [
+    {name:'Where Winter Glows',dest:'London, Paris',dates:'Nov 30 - Dec 9',status:'Itinerary Review',statusColor:'bg-amber-100 text-amber-700',advisor:'Sarah K.',members:3,pending:4},
+    {name:'Tokyo Reset',dest:'Tokyo, Kyoto',dates:'Jan 15 - Jan 24',status:'Outline',statusColor:'bg-purple-100 text-purple-700',advisor:'Sarah K.',members:2,pending:0},
+    {name:'Amalfi Dreams',dest:'Naples, Positano',dates:'Apr 20 - Apr 28',status:'Booking In Progress',statusColor:'bg-orange-100 text-orange-700',advisor:'Mike T.',members:4,pending:7},
+    {name:'Swiss Alps Escape',dest:'Zurich, Zermatt',dates:'Mar 5 - Mar 12',status:'Booking Complete',statusColor:'bg-emerald-100 text-emerald-700',advisor:'Sarah K.',members:2,pending:0}
+  ];
+
+  let rows = '';
+  trips.forEach(t => {
+    rows += '<tr class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3 border-b border-gray-100"><div class="font-medium text-gray-900 text-sm">'+t.name+'</div><div class="text-xs text-gray-500">'+t.dest+'</div></td><td class="px-4 py-3 border-b border-gray-100 text-xs text-gray-600">'+t.dates+'</td><td class="px-4 py-3 border-b border-gray-100"><span class="cc-badge '+t.statusColor+'">'+t.status+'</span></td><td class="px-4 py-3 border-b border-gray-100 text-xs text-gray-600">'+t.advisor+'</td><td class="px-4 py-3 border-b border-gray-100 text-center text-xs text-gray-600">'+t.members+'</td><td class="px-4 py-3 border-b border-gray-100 text-center">'+(t.pending>0?'<span class="cc-badge bg-rose-100 text-rose-700">'+t.pending+'</span>':'<span class="cc-badge bg-gray-100 text-gray-400">0</span>')+'</td><td class="px-4 py-3 border-b border-gray-100"><button class="cc-btn cc-btn-outline text-xs" onclick="alert(\'Advance Status modal would open here with validation warnings.\')">Advance</button></td></tr>';
+  });
+
+  return '<div class="panel mb-4"><div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Feature A: Trip Status Dashboard</div><div class="text-sm text-gray-400 mb-1">List/table of all active trips with status pipeline, advisor assignment, and pending action counts. One-click "Advance Status" with validation warnings.</div><div class="text-xs text-gray-500">Addresses gaps: Trip status transitions, Validation/guardrails</div></div>'
+    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Trip Status Dashboard</span><span class="cc-badge bg-gray-100 text-gray-600">4 active trips</span></div><div class="flex items-center gap-2"><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Statuses</option></select><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Advisors</option></select></div></div><div class="cc-body" style="padding:0;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr class="bg-gray-50"><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Trip</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Dates</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Status</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Advisor</th><th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Members</th><th class="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Pending</th><th class="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200"></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+function renderCCComponentBoard(){
+  const cols = [
+    {name:'Working on it',color:'#7c3aed',count:1,cards:[{name:'Eurostar to Paris',cat:'Train',icon:'&#128646;',decision:'Pending',decColor:'text-amber-600 bg-amber-50'}]},
+    {name:'Need your input',color:'#d97706',count:1,cards:[{name:'Tower of London Tour',cat:'Experience',icon:'&#127968;',decision:'Pending',decColor:'text-amber-600 bg-amber-50'}]},
+    {name:'Ready for approval',color:'#2563eb',count:3,cards:[{name:'AUS -> LHR Flight',cat:'Flight',icon:'&#9992;&#65039;',decision:'Approved',decColor:'text-emerald-600 bg-emerald-50'},{name:'Corinthia London',cat:'Hotel',icon:'&#127976;',decision:'Pending',decColor:'text-amber-600 bg-amber-50'},{name:'The Ritz London',cat:'Hotel',icon:'&#127976;',decision:'Declined',decColor:'text-rose-600 bg-rose-50'}]},
+    {name:'On hold',color:'#6b7280',count:0,cards:[]},
+    {name:'Confirmed',color:'#059669',count:1,cards:[{name:'Le Jules Verne',cat:'Dining',icon:'&#127860;',decision:'Approved',decColor:'text-emerald-600 bg-emerald-50'}]},
+    {name:'Booked',color:'#047857',count:0,cards:[]}
+  ];
+
+  let colsHtml = '';
+  cols.forEach(col => {
+    let cardsHtml = '';
+    col.cards.forEach(c => {
+      cardsHtml += '<div class="cc-card" style="cursor:grab"><div class="flex items-center gap-1.5 mb-1"><span style="font-size:14px">'+c.icon+'</span><span class="text-sm font-medium text-gray-900">'+c.name+'</span></div><div class="flex items-center gap-1.5 mt-2"><span class="cc-badge bg-gray-100 text-gray-500">'+c.cat+'</span><span class="cc-badge '+c.decColor+'">'+c.decision+'</span></div></div>';
+    });
+    if(col.cards.length===0) cardsHtml = '<div class="text-center py-8 text-xs text-gray-400">No components</div>';
+    colsHtml += '<div class="kanban-col"><div class="kanban-col-header"><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:'+col.color+'"></span>'+col.name+'</span><span class="text-gray-400 font-normal">'+col.count+'</span></div><div class="kanban-col-body" style="background:#f9fafb;border-radius:6px;padding:6px;min-height:140px">'+cardsHtml+'</div></div>';
+  });
+
+  return '<div class="panel mb-4"><div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Feature B: Component Status Board</div><div class="text-sm text-gray-400 mb-1">Kanban board for all components within a trip, grouped by client-facing status. Drag to change status. Bulk actions bar for efficiency.</div><div class="text-xs text-gray-500">Addresses gaps: Component status, Batch updates, Validation</div></div>'
+    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Where Winter Glows</span><span class="text-xs text-gray-400">Component Board</span></div><div class="flex items-center gap-2"><button class="cc-btn cc-btn-outline text-xs">Mark all Ready for Approval</button><button class="cc-btn cc-btn-outline text-xs">Mark all Booked</button></div></div><div class="cc-body" style="overflow-x:auto"><div style="display:flex;gap:12px;min-width:960px">'+colsHtml+'</div></div></div>';
+}
+
+function renderCCActionQueue(){
+  const items = [
+    {icon:'&#128077;',text:'John D. approved Corinthia London',trip:'Where Winter Glows',time:'2 min ago',type:'approval',unread:true},
+    {icon:'&#128172;',text:'Susan U. posted comment on AUS-LHR Flight',trip:'Where Winter Glows',time:'15 min ago',type:'comment',unread:true},
+    {icon:'&#128078;',text:'John D. declined The Ritz London',trip:'Where Winter Glows',time:'1 hr ago',type:'decline',unread:true},
+    {icon:'&#128172;',text:'Susan U. asked about vegetarian options at Le Jules Verne',trip:'Where Winter Glows',time:'2 hrs ago',type:'comment',unread:false},
+    {icon:'&#128077;',text:'Maria K. approved Park Hyatt Tokyo',trip:'Tokyo Reset',time:'5 hrs ago',type:'approval',unread:false}
+  ];
+
+  let itemsHtml = '';
+  items.forEach(it => {
+    const borderColor = it.unread?'border-l-2 border-l-blue-500':'border-l-2 border-l-transparent';
+    const bgColor = it.unread?'bg-blue-50/50':'bg-white';
+    const typeColor = it.type==='approval'?'bg-emerald-100 text-emerald-700':it.type==='decline'?'bg-rose-100 text-rose-700':'bg-blue-100 text-blue-700';
+    itemsHtml += '<div class="flex items-start gap-3 px-4 py-3 '+borderColor+' '+bgColor+' hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100"><span style="font-size:18px;line-height:1">'+it.icon+'</span><div class="flex-1 min-w-0"><div class="text-sm text-gray-900 '+(it.unread?'font-medium':'')+'">'+it.text+'</div><div class="flex items-center gap-2 mt-1"><span class="text-xs text-gray-500">'+it.trip+'</span><span class="text-xs text-gray-300">&middot;</span><span class="text-xs text-gray-400">'+it.time+'</span></div></div><span class="cc-badge '+typeColor+'" style="flex-shrink:0;margin-top:2px">'+it.type+'</span></div>';
+  });
+
+  return '<div class="panel mb-4"><div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Feature C: Member Action Queue</div><div class="text-sm text-gray-400 mb-1">Real-time feed of member actions (approvals, declines, comments) with relative timestamps. Unread badge, filter by trip or action type.</div><div class="text-xs text-gray-500">Addresses gaps: Member action alerts</div></div>'
+    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Member Actions</span><span class="cc-badge bg-blue-100 text-blue-700">3 unread</span></div><div class="flex items-center gap-2"><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Trips</option></select><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Actions</option></select></div></div><div style="max-height:320px;overflow-y:auto">'+itemsHtml+'</div></div>';
+}
+
+function renderCCFinalization(){
+  const checks = [
+    {label:'All components have a client decision',status:'fail',detail:'3 of 6 components still have "Pending" decision'},
+    {label:'All approved components have confirmation numbers',status:'fail',detail:'AUS->LHR Flight: approved but no conf number'},
+    {label:'No unresolved comments',status:'fail',detail:'2 comments in "New" status, 1 in "In Progress"'},
+    {label:'All approved components in "Booked" status',status:'fail',detail:'0 of 3 approved components are in "Booked" status'}
+  ];
+
+  const components = [
+    {name:'AUS -> LHR Flight',decision:'Approved',decOk:true,status:'Ready for approval',conf:'',confOk:false},
+    {name:'Corinthia London',decision:'Pending',decOk:false,status:'Ready for approval',conf:'',confOk:false},
+    {name:'Le Jules Verne',decision:'Approved',decOk:true,status:'Confirmed',conf:'JV-2026-1234',confOk:true}
+  ];
+
+  let checksHtml = '';
+  checks.forEach(c => {
+    const icon = c.status==='pass'?'<span class="text-emerald-500">&#10003;</span>':'<span class="text-rose-500">&#10005;</span>';
+    const bg = c.status==='pass'?'bg-emerald-50':'bg-rose-50';
+    checksHtml += '<div class="flex items-start gap-3 p-3 rounded-lg '+bg+'"><span class="text-lg mt-0.5">'+icon+'</span><div><div class="text-sm font-medium text-gray-900">'+c.label+'</div><div class="text-xs text-gray-500 mt-0.5">'+c.detail+'</div></div></div>';
+  });
+
+  let compRows = '';
+  components.forEach(c => {
+    const decBadge = c.decOk?'<span class="cc-badge bg-emerald-100 text-emerald-700">'+c.decision+'</span>':'<span class="cc-badge bg-amber-100 text-amber-700">'+c.decision+'</span>';
+    const confCell = c.confOk?'<span class="text-sm text-emerald-600">'+c.conf+'</span>':'<input type="text" placeholder="Enter conf #" class="text-xs border border-gray-200 rounded px-2 py-1 w-32" />';
+    compRows += '<tr><td class="px-4 py-2.5 border-b border-gray-100 text-sm font-medium text-gray-900">'+c.name+'</td><td class="px-4 py-2.5 border-b border-gray-100">'+decBadge+'</td><td class="px-4 py-2.5 border-b border-gray-100 text-sm text-gray-600">'+c.status+'</td><td class="px-4 py-2.5 border-b border-gray-100">'+confCell+'</td></tr>';
+  });
+
+  return '<div class="panel mb-4"><div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Feature D: Trip Finalization Checklist</div><div class="text-sm text-gray-400 mb-1">Pre-flight checklist before advancing to "Booking Complete". Pass/fail indicators, inline conf number entry, validation.</div><div class="text-xs text-gray-500">Addresses gaps: Trip finalization, Validation/guardrails</div></div>'
+    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Finalization Checklist</span><span class="text-xs text-gray-400">Where Winter Glows</span></div><button class="cc-btn cc-btn-primary text-xs opacity-50 cursor-not-allowed" disabled>Finalize Trip (4 blockers)</button></div><div class="cc-body"><div class="space-y-2 mb-6">'+checksHtml+'</div><div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Components</div><table style="width:100%;border-collapse:collapse"><thead><tr class="bg-gray-50"><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Component</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Decision</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Status</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Conf #</th></tr></thead><tbody>'+compRows+'</tbody></table></div></div>';
+}
+
+function renderCCComments(){
+  const threads = [
+    {component:'Corinthia London',comments:[
+      {author:'John D.',type:'Client',text:'Can we get a room with a Thames view?',time:'Mar 15, 2:30 PM',status:'Resolved',avatar:'JD'},
+      {author:'Sarah K.',type:'Maestro',text:'Absolutely! I\'ve noted the Thames-view penthouse suite. We\'ve secured the River View Penthouse on the 5th floor.',time:'Mar 15, 3:15 PM',status:'Resolved',avatar:'SK'},
+      {author:'John D.',type:'Client',text:'Is late check-in possible? We arrive around 11 PM.',time:'Mar 17, 9:00 AM',status:'New',avatar:'JD'},
+      {author:'Sarah K.',type:'Maestro',text:'Looking into late check-in now -- most likely yes for the suite. Will confirm within 24 hrs.',time:'Mar 17, 10:30 AM',status:'In Progress',avatar:'SK'},
+      {author:'John D.',type:'Client',text:'Also, can you arrange airport transfer from Heathrow? Private car preferred.',time:'Mar 17, 2:00 PM',status:'New',avatar:'JD'}
+    ]},
+    {component:'Le Jules Verne',comments:[
+      {author:'Susan U.',type:'Client',text:'Any vegetarian options at Le Jules Verne? My husband is vegetarian.',time:'Mar 16, 11:00 AM',status:'In Progress',avatar:'SU'},
+      {author:'Sarah K.',type:'Maestro',text:'Yes! Chef Frederic Anton offers a dedicated vegetarian tasting menu. I\'ll pre-arrange this with the restaurant.',time:'Mar 16, 2:45 PM',status:'In Progress',avatar:'SK'},
+      {author:'Susan U.',type:'Client',text:'Perfect. Also my wife has a shellfish allergy -- please flag this with the kitchen.',time:'Mar 17, 8:15 AM',status:'New',avatar:'SU'}
+    ]},
+    {component:'AUS->LHR Flight',comments:[
+      {author:'Ops Team',type:'Internal',text:'Client prefers window seat -- noted from onboarding call.',time:'Mar 14, 4:00 PM',status:'New',avatar:'OT'},
+      {author:'Ops Team',type:'Internal',text:'Checked availability -- 2A and 2K both window seats in First. Recommending 2A (better galley access).',time:'Mar 15, 9:00 AM',status:'New',avatar:'OT'}
+    ]},
+    {component:'Tower of London Tour',comments:[
+      {author:'John D.',type:'Client',text:'Can we do a private tour instead of group? Happy to pay extra.',time:'Mar 18, 10:00 AM',status:'New',avatar:'JD'}
+    ]}
+  ];
+
+  let threadsHtml = '';
+  threads.forEach(t => {
+    let commentsHtml = '';
+    t.comments.forEach(c => {
+      const typeColor = c.type==='Client'?'bg-violet-100 text-violet-700':c.type==='Maestro'?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-600';
+      const statusColor = c.status==='New'?'bg-blue-100 text-blue-700':c.status==='In Progress'?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-400';
+      const isClient = c.type==='Client';
+      commentsHtml += '<div class="flex gap-3 py-2.5 '+(isClient?'':'pl-8')+'"><div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background:'+(isClient?'#7c3aed':c.type==='Maestro'?'#059669':'#6b7280')+'">'+c.avatar+'</div><div class="flex-1"><div class="flex items-center gap-2 mb-0.5"><span class="text-sm font-medium text-gray-900">'+c.author+'</span><span class="cc-badge '+typeColor+'">'+c.type+'</span><span class="cc-badge '+statusColor+'">'+c.status+'</span><span class="text-xs text-gray-400 ml-auto">'+c.time+'</span></div><p class="text-sm text-gray-700">'+c.text+'</p></div></div>';
+    });
+    threadsHtml += '<div class="mb-4 border border-gray-200 rounded-lg overflow-hidden"><div class="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between"><span class="text-sm font-medium text-gray-900">'+t.component+'</span><span class="text-xs text-gray-400">'+t.comments.length+' comment'+(t.comments.length>1?'s':'')+'</span></div><div class="px-4 py-2 divide-y divide-gray-100">'+commentsHtml+'</div><div class="px-4 py-2.5 bg-gray-50 border-t border-gray-200"><input type="text" placeholder="Reply..." class="text-sm border border-gray-200 rounded-md px-3 py-1.5 w-full bg-white" /></div></div>';
+  });
+
+  return '<div class="panel mb-4"><div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Feature E: Comment Management Panel</div><div class="text-sm text-gray-400 mb-1">Threaded comment view across all trip components. Filter by status, component, type. Quick status change and inline reply.</div><div class="text-xs text-gray-500">Addresses gaps: Comment status management</div></div>'
+    +'<div class="cc-mock"><div class="cc-header"><div class="flex items-center gap-3"><span class="text-sm font-semibold text-gray-900">Comments</span><span class="cc-badge bg-blue-100 text-blue-700">6 unresolved</span></div><div class="flex items-center gap-2"><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Statuses</option></select><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Components</option></select><select class="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 bg-white"><option>All Types</option></select></div></div><div class="cc-body">'+threadsHtml+'</div></div>';
+}
+
+// ============================================================
+// SECTION 6: USER STORIES
+// ============================================================
+const stories = [
+  {id:'US-1',story:'As an advisor, I want to see all my active trips with their current status in one view, so I can prioritize my work.',feature:'Feature A: Trip Dashboard',criteria:['Dashboard displays all active trips with name, destination, dates, current status, advisor, member count, pending actions count','Status shown as colored badge matching the 8-state pipeline','Filter by status, advisor, date range, and member','Sort by start date, last activity, or pending actions count','Click a trip to expand inline details']},
+  {id:'US-2',story:'As an advisor, I want to advance a trip\'s status with one click and see validation warnings, so I don\'t skip critical steps.',feature:'Feature A: Trip Dashboard',criteria:['One-click "Advance Status" button on each trip row','Confirmation modal shows the from/to status transition','Validation warnings if prerequisites are not met (e.g., "3 components still have no decision")','Option to proceed with warnings or cancel','Status change logged with timestamp and user']},
+  {id:'US-3',story:'As an advisor, I want to drag components between status columns, so I can efficiently manage 15+ components per trip.',feature:'Feature B: Component Board',criteria:['Kanban board with 6 client-facing status columns','Drag-and-drop to change component status','Each card shows component name, category icon, member decision state, comment count','Validation prevents invalid transitions (e.g., cannot move to "Booked" without conf number)','Board updates in real-time for all ops users']},
+  {id:'US-4',story:'As an advisor, I want a real-time feed of member actions, so I can respond within the SLA.',feature:'Feature C: Action Queue',criteria:['Feed shows member approvals, declines, comments, and feedback with relative timestamps','Unread badge count in sidebar navigation','New items appear at the top without page refresh (Pusher/WebSocket)','Click an item to navigate directly to the relevant component','Filter by trip and action type']},
+  {id:'US-5',story:'As an advisor, I want a finalization checklist before marking a trip "Booking Complete", so I don\'t miss conf numbers.',feature:'Feature D: Finalization Checklist',criteria:['Checklist validates: all decisions made, all conf numbers entered, no unresolved comments, all approved components in "Booked" status','Pass/fail indicator for each check with details on failures','Inline conf number entry for each component','"Finalize Trip" button disabled until all checks pass','Trip status automatically set to "Booking Complete" on finalization']},
+  {id:'US-6',story:'As an advisor, I want to see and respond to all comments across a trip, so nothing falls through the cracks.',feature:'Feature E: Comment Management',criteria:['Threaded comment view grouped by component','Filter by comment status (New, In Progress, Resolved), component, and type (Client, Maestro, Internal)','Quick status change via dropdown on each comment','Inline reply creates a Maestro-type comment','Unresolved count badge visible in trip navigation']},
+  {id:'US-7',story:'As an advisor, I want to bulk-update component statuses, so I can handle large trips efficiently.',feature:'Feature B: Component Board',criteria:['Bulk action bar with "Mark all Ready for Approval" and "Mark all Booked" buttons','Select multiple components via checkboxes','Bulk action validates each component individually (skips those failing validation)','Summary toast shows how many components were updated and how many were skipped with reasons','Undo option within 10 seconds of bulk action']}
+];
+
+function renderStories(){
+  const el = document.getElementById('stories-list');
+  let html = '';
+  stories.forEach((s,i) => {
+    let criteria = '';
+    s.criteria.forEach(c => {
+      criteria += '<li class="text-sm text-gray-400 flex items-start gap-2"><span class="text-emerald-500 mt-0.5 flex-shrink-0">&#10003;</span><span>'+c+'</span></li>';
+    });
+    html += '<div class="story-card"><div class="flex items-center gap-3 mb-3"><span class="text-xs font-mono text-gray-500 bg-[#111122] px-2 py-0.5 rounded">'+s.id+'</span><span class="text-xs text-blue-400">'+s.feature+'</span></div><p class="text-sm text-white font-medium leading-relaxed mb-3">'+s.story+'</p><div class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Acceptance Criteria</div><ul class="space-y-1.5">'+criteria+'</ul></div>';
+  });
+  el.innerHTML = html;
+}
+
+// ============================================================
+// SECTION 7: SIZING
+// ============================================================
+const sizingData = {
+  optimistic: [
+    {feature:'A: Trip Dashboard',frontend:3,backend:2,total:5,priority:'P0'},
+    {feature:'B: Component Board',frontend:5,backend:3,total:8,priority:'P0'},
+    {feature:'C: Action Queue',frontend:3,backend:2,total:5,priority:'P0'},
+    {feature:'D: Finalization Checklist',frontend:2,backend:1,total:3,priority:'P1'},
+    {feature:'E: Comments Panel',frontend:3,backend:2,total:5,priority:'P1'}
+  ],
+  pessimistic: [
+    {feature:'A: Trip Dashboard',frontend:5,backend:3,total:8,priority:'P0'},
+    {feature:'B: Component Board',frontend:8,backend:4,total:12,priority:'P0'},
+    {feature:'C: Action Queue',frontend:4,backend:3,total:7,priority:'P0'},
+    {feature:'D: Finalization Checklist',frontend:3,backend:2,total:5,priority:'P1'},
+    {feature:'E: Comments Panel',frontend:4,backend:3,total:7,priority:'P1'}
+  ]
+};
+
+let szMode = 'optimistic';
+
+function setSzMode(mode){
+  szMode = mode;
+  document.querySelectorAll('#sz-toggle button').forEach(b => b.classList.remove('active'));
+  document.querySelector('#sz-toggle button'+(mode==='optimistic'?':first-child':':last-child')).classList.add('active');
+  renderSzTable();
+}
+
+function renderSzTable(){
+  const data = sizingData[szMode];
+  const el = document.getElementById('sz-table-wrap');
+  let feTotal = 0, beTotal = 0, allTotal = 0;
+  let p0Total = 0, p1Total = 0;
+  let rows = '';
+  data.forEach(d => {
+    const pColor = d.priority==='P0'?'tag-low':'tag-medium';
+    rows += '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 80px;padding:14px 20px;border-bottom:1px solid #1a1a30;align-items:center"><div class="text-sm text-white font-medium">'+d.feature+'</div><div class="text-sm text-gray-400 font-mono">'+d.frontend+' days</div><div class="text-sm text-gray-400 font-mono">'+d.backend+' days</div><div class="text-sm text-white font-semibold font-mono">'+d.total+' days</div><div style="text-align:center"><span class="tag '+pColor+'">'+d.priority+'</span></div></div>';
+    feTotal += d.frontend;
+    beTotal += d.backend;
+    allTotal += d.total;
+    if(d.priority==='P0') p0Total += d.total;
+    else p1Total += d.total;
+  });
+
+  const oData = sizingData.optimistic;
+  const pData = sizingData.pessimistic;
+  const oTotal = oData.reduce((a,b)=>a+b.total,0);
+  const pTotal = pData.reduce((a,b)=>a+b.total,0);
+  const oP0 = oData.filter(d=>d.priority==='P0').reduce((a,b)=>a+b.total,0);
+  const pP0 = pData.filter(d=>d.priority==='P0').reduce((a,b)=>a+b.total,0);
+  const oP1 = oData.filter(d=>d.priority==='P1').reduce((a,b)=>a+b.total,0);
+  const pP1 = pData.filter(d=>d.priority==='P1').reduce((a,b)=>a+b.total,0);
+
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 80px;background:#111122;padding:14px 20px;border-bottom:1px solid #1e1e35;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280"><div>Feature</div><div>Frontend</div><div>Backend</div><div>Total</div><div style="text-align:center">Priority</div></div>'
+    +rows
+    +'<div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 80px;padding:14px 20px;background:#111122;font-weight:700;align-items:center"><div class="text-sm text-white">Total ('+szMode+')</div><div class="text-sm text-emerald-400 font-mono">'+feTotal+' days</div><div class="text-sm text-emerald-400 font-mono">'+beTotal+' days</div><div class="text-sm text-emerald-400 font-mono">'+allTotal+' days</div><div></div></div>';
+
+  document.getElementById('ph1-total').textContent = oP0+'-'+pP0+' days';
+  document.getElementById('ph2-total').textContent = oP1+'-'+pP1+' days';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderGapTable();
+  renderViewTabs();
+  renderViewContent(0);
+  renderAutoTable();
+  renderWfSteps();
+  renderCCTabs();
+  renderCCContent(0);
+  renderStories();
+  renderSzTable();
+
+  const hash = location.hash.replace('#','');
+  if(hash && pageOrder.includes(hash)){
+    showPage(hash);
+  } else {
+    showPage('gap-analysis');
+  }
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
+  if(e.key==='ArrowLeft'){
+    e.preventDefault();
+    if(pageOrder[currentPageIdx]==='daily-workflow'){ wfPrev(); }
+    else { navPrev(); }
+  }
+  if(e.key==='ArrowRight'){
+    e.preventDefault();
+    if(pageOrder[currentPageIdx]==='daily-workflow'){ wfNext(); }
+    else { navNext(); }
+  }
+  if(e.key==='ArrowUp'){ e.preventDefault(); navPrev(); }
+  if(e.key==='ArrowDown'){ e.preventDefault(); navNext(); }
+});
+</script>
+</body>
+</html>
