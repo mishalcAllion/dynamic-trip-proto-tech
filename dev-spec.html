@@ -101,6 +101,53 @@ code,pre,.code-font{font-family:'JetBrains Mono',monospace}
 .progress-fill{height:100%;background:#80f0c8;border-radius:1px;transition:width .3s ease}
 /* View matrix alternating rows */
 .matrix-row-alt{background:rgba(255,255,255,.015)}
+/* ── BPMN Swim Lane Diagram ── */
+.bpmn-pool{border:1px solid #1e1e35;border-radius:10px;overflow:hidden;margin-bottom:4px}
+.bpmn-lane{display:flex;border-bottom:1px solid #1e1e35}
+.bpmn-lane:last-child{border-bottom:none}
+.bpmn-lane-header{writing-mode:vertical-lr;text-orientation:mixed;transform:rotate(180deg);background:#14142a;color:#9ca3af;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:14px 10px;text-align:center;min-width:36px;display:flex;align-items:center;justify-content:center;border-right:1px solid #1e1e35}
+.bpmn-lane-header.lane-client{border-left:3px solid #3b82f6}
+.bpmn-lane-header.lane-backend{border-left:3px solid #8b5cf6}
+.bpmn-lane-header.lane-notion{border-left:3px solid #10b981}
+.bpmn-lane-header.lane-ops{border-left:3px solid #f59e0b}
+.bpmn-lane-content{flex:1;min-height:80px;padding:14px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.bpmn-task{padding:10px 14px;font-size:11px;background:#1a1a30;border:1px solid #2a2a45;border-radius:8px;cursor:pointer;transition:all .2s;max-width:220px;line-height:1.4;flex-shrink:0}
+.bpmn-task:hover{border-color:#4a4a6a;background:#1e1e38;box-shadow:0 0 12px rgba(255,255,255,.04)}
+.bpmn-task.active{border-color:#80f0c8;background:rgba(128,240,200,.06);box-shadow:0 0 16px rgba(128,240,200,.1)}
+.bpmn-task .bpmn-task-label{font-weight:600;color:#e0e4ea;font-size:11px}
+.bpmn-task .bpmn-task-sub{font-size:9px;color:#7a8494;margin-top:3px}
+.bpmn-task.user-task{border-left:3px solid #3b82f6}
+.bpmn-task.service-task{border-left:3px solid #8b5cf6}
+.bpmn-task.manual-task{border-left:3px solid #f59e0b}
+.bpmn-task.send-task{border-left:3px solid #10b981}
+.bpmn-gateway{width:28px;height:28px;transform:rotate(45deg);border:2px solid #f59e0b;background:rgba(245,158,11,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s}
+.bpmn-gateway:hover{border-color:#fbbf24;box-shadow:0 0 12px rgba(245,158,11,.2)}
+.bpmn-gateway .gw-icon{transform:rotate(-45deg);font-size:12px;font-weight:700;color:#f59e0b}
+.bpmn-event-start{width:28px;height:28px;border-radius:50%;border:2px solid #10b981;background:rgba(16,185,129,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bpmn-event-start::after{content:'';width:8px;height:8px;border-radius:50%;background:#10b981}
+.bpmn-event-end{width:28px;height:28px;border-radius:50%;border:3px solid #ef4444;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bpmn-event-end::after{content:'';width:8px;height:8px;border-radius:50%;background:#ef4444}
+.bpmn-note{background:rgba(245,158,11,.06);border:1px dashed rgba(245,158,11,.3);border-radius:6px;padding:8px 12px;font-size:9px;color:#f59e0b;max-width:200px;line-height:1.4;flex-shrink:0}
+.bpmn-arrow{display:inline-flex;align-items:center;flex-shrink:0}
+.bpmn-arrow svg{display:block}
+.bpmn-arrow-compact svg{transform:scale(.75)}
+.bpmn-flow-row{display:flex;align-items:center;gap:6px;padding:4px 18px 4px 54px;font-size:9px;color:#60a5fa}
+.bpmn-flow-row svg{flex-shrink:0}
+.bpmn-flow-row .flow-label{color:#7a8fa8}
+.bpmn-flow-row .flow-from,.bpmn-flow-row .flow-to{font-weight:600;color:#93ddff;text-transform:uppercase;letter-spacing:.5px}
+.bpmn-phase-tab{padding:4px 12px;font-size:12px;border-radius:4px;cursor:pointer;transition:all .15s;color:#6b7280;background:transparent;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px}
+.bpmn-phase-tab:hover{color:#c8d4e4}
+.bpmn-phase-tab.active{background:#1e1e35;color:#c8d4e4;border-color:#252540}
+.bpmn-phase-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* Full diagram columns */
+.bpmn-full-phase{display:inline-block;vertical-align:top;min-width:280px;border-right:1px solid #1e1e35;padding:0}
+.bpmn-full-phase:last-child{border-right:none}
+.bpmn-full-phase-header{padding:10px 14px;background:#14142a;border-bottom:1px solid #1e1e35;font-size:11px;font-weight:600;color:#c8d4e4;display:flex;align-items:center;gap:6px}
+.bpmn-full-lane{border-bottom:1px solid #1a1a30;padding:10px 14px;min-height:60px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bpmn-full-lane:last-child{border-bottom:none}
+.bpmn-full-lane .bpmn-task{font-size:10px;padding:6px 10px;max-width:180px}
+.bpmn-full-lane .bpmn-task .bpmn-task-label{font-size:10px}
+.bpmn-full-lane .bpmn-task .bpmn-task-sub{font-size:8px}
 @media(max-width:900px){.sidebar{display:none}.main-content{margin-left:0;padding:20px}}
 </style>
 </head>
@@ -125,7 +172,7 @@ code,pre,.code-font{font-family:'JetBrains Mono',monospace}
   </div>
   <div class="h-px bg-[#1e1e35] mx-5 mb-2"></div>
   <div class="px-5 mb-2">
-    <div class="text-[10px] text-gray-500 mb-1" id="progress-text">0 / 8 sections viewed</div>
+    <div class="text-[10px] text-gray-500 mb-1" id="progress-text">0 / 9 sections viewed</div>
     <div class="progress-bar" style="margin:0"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
   </div>
   <div class="h-px bg-[#1e1e35] mx-5 mb-3"></div>
@@ -137,6 +184,7 @@ code,pre,.code-font{font-family:'JetBrains Mono',monospace}
   <a href="#view-logic" data-section="view-logic" class="nav-link" onclick="showPage('view-logic');return false;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg><span class="opacity-50 text-xs font-mono mr-0.5">6.</span>View Logic</a>
   <a href="#edge-cases" data-section="edge-cases" class="nav-link" onclick="showPage('edge-cases');return false;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="opacity-50 text-xs font-mono mr-0.5">7.</span>Edge Cases</a>
   <a href="#performance" data-section="performance" class="nav-link" onclick="showPage('performance');return false;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span class="opacity-50 text-xs font-mono mr-0.5">8.</span>Performance</a>
+  <a href="#trip-lifecycle" data-section="trip-lifecycle" class="nav-link" onclick="showPage('trip-lifecycle');return false;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span class="opacity-50 text-xs font-mono mr-0.5">9.</span>Trip Lifecycle</a>
 </nav>
 
 <!-- MAIN CONTENT -->
@@ -656,6 +704,55 @@ sequenceDiagram
         <p class="text-sm text-gray-400">SSE (Server-Sent Events) with 5-minute polling fallback</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ===================== SECTION 9: TRIP LIFECYCLE ===================== -->
+<section id="trip-lifecycle" data-page="trip-lifecycle" class="page-section hidden">
+  <h2 class="section-title">Trip Lifecycle</h2>
+  <p class="section-sub">End-to-end BPMN swim lane diagram -- 8 phases, 4 actors</p>
+  <div class="section-intro">Complete process flow showing how a trip moves from creation to post-trip. Four swim lanes show Client (Mobile App), Backend/BFF, Notion (System of Record), and Ops (Advisor) interactions at each phase. Click any node for details, or toggle "Full Diagram" to see all phases at once.</div>
+
+  <!-- Controls: Mode toggle + Phase tabs -->
+  <div class="flex items-center gap-3 mb-4 flex-wrap">
+    <button id="bpmn-mode-toggle" onclick="toggleBpmnMode()" class="err-tab" style="border-color:#8b5cf6;color:#8b5cf6">Full Diagram</button>
+    <div class="h-4 w-px bg-gray-700"></div>
+    <div class="flex gap-2 flex-wrap" id="bpmn-phase-tabs"></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="panel mb-4" style="padding:10px 16px;">
+    <div class="flex flex-wrap gap-4 items-center text-[10px] text-gray-400">
+      <span class="flex items-center gap-1.5"><span style="width:10px;height:10px;border-radius:50%;border:2px solid #10b981;display:inline-block"></span> Start</span>
+      <span class="flex items-center gap-1.5"><span style="width:10px;height:10px;border-radius:50%;border:2px solid #ef4444;display:inline-block"></span> End</span>
+      <span class="flex items-center gap-1.5"><span style="width:14px;height:10px;border-radius:3px;border-left:3px solid #3b82f6;background:#1a1a30;display:inline-block"></span> User Task</span>
+      <span class="flex items-center gap-1.5"><span style="width:14px;height:10px;border-radius:3px;border-left:3px solid #8b5cf6;background:#1a1a30;display:inline-block"></span> Service Task</span>
+      <span class="flex items-center gap-1.5"><span style="width:14px;height:10px;border-radius:3px;border-left:3px solid #f59e0b;background:#1a1a30;display:inline-block"></span> Manual Task</span>
+      <span class="flex items-center gap-1.5"><span style="width:14px;height:10px;border-radius:3px;border-left:3px solid #10b981;background:#1a1a30;display:inline-block"></span> Send Task</span>
+      <span class="flex items-center gap-1.5"><span style="width:10px;height:10px;transform:rotate(45deg);border:1.5px solid #f59e0b;background:rgba(245,158,11,.1);display:inline-block"></span> Gateway</span>
+      <span class="flex items-center gap-1.5"><span style="width:14px;border-top:1.5px dashed #60a5fa;display:inline-block"></span> Message Flow</span>
+    </div>
+  </div>
+
+  <!-- Tabbed view (default) -->
+  <div id="bpmn-tabbed-view">
+    <div class="panel" id="bpmn-diagram" style="padding:0;overflow:hidden"></div>
+  </div>
+
+  <!-- Full diagram view (hidden) -->
+  <div id="bpmn-full-view" class="hidden">
+    <div class="panel" style="overflow-x:auto;padding:0">
+      <div id="bpmn-full-diagram" style="min-width:2400px"></div>
+    </div>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="panel hidden mt-4" id="bpmn-detail">
+    <div class="flex items-center justify-between mb-2">
+      <div class="text-xs font-bold uppercase tracking-widest text-gray-500" id="bpmn-detail-title">Node Details</div>
+      <button onclick="document.getElementById('bpmn-detail').classList.add('hidden')" class="text-gray-500 hover:text-white text-xs">Close</button>
+    </div>
+    <div id="bpmn-detail-content" class="text-sm text-gray-300"></div>
   </div>
 </section>
 
@@ -1350,10 +1447,484 @@ function renderEdgeCases(){
 }
 
 // ============================================================
+// BPMN TRIP LIFECYCLE (Section 9)
+// ============================================================
+const bpmnPhases = [
+  {
+    id: 'not-started',
+    name: 'Not Started',
+    color: '#9ca3af',
+    lanes: {
+      client: [
+        { type: 'event-start', label: 'Trip Lifecycle Begins', detail: 'The trip lifecycle starts when an ops advisor receives a client request. At this phase the trip is not yet visible to the client in the mobile app.' },
+        { type: 'note', label: 'Trip not visible in app', detail: 'The client cannot see this trip in their mobile app because no API record exists yet. The trip is being set up internally by the ops team.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'No Activity', sub: 'Trip not in API response', detail: 'The BFF API has no record of this trip. GET /trips will not return it. The trip exists only in Notion at this point.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Trip DB Record Created', sub: 'Status = Not Started', detail: 'A new record is created in the Trips database in Notion. The trip_status field is set to "Not Started". This is the system of record.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Create Trip Record', sub: 'Set dates, travelers, destinations', detail: 'The ops advisor creates a new trip record in Notion, entering the trip dates, number of travelers, and destination details. This is the first step in every trip lifecycle.' },
+        { type: 'task', taskType: 'manual', label: 'Set Page Type', sub: 'Dynamic | Notion | Custom', detail: 'The advisor selects the trip page type: Dynamic (new interactive page), Notion (legacy embedded page), or Custom (bespoke layout). This determines how the client will view the trip in the mobile app.' }
+      ]
+    },
+    flows: [
+      { from: 'Ops', to: 'Notion', label: 'Write to Trips DB' }
+    ]
+  },
+  {
+    id: 'trip-identified',
+    name: 'Trip Identified',
+    color: '#3b82f6',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'Sees Placeholder', sub: "'Your advisor is getting started'", detail: 'The client sees their trip appear for the first time in the app. It shows a placeholder card with the message "Your advisor is getting started" since no components exist yet.' },
+        { type: 'task', taskType: 'user', label: 'Status Banner', sub: "Shows 'Getting Started'", detail: 'A status banner at the top of the trip page displays "Getting Started" to set expectations that the itinerary is being prepared.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: '60s Poll Detects Change', sub: 'Trip appears in GET /trips', detail: 'The BFF polls Notion every 60 seconds. When the trip status changes to "Trip Identified", the trip appears in the GET /trips response for the first time. The client_facing_status maps to a placeholder view.' },
+        { type: 'task', taskType: 'service', label: 'Cache Trip Metadata', sub: 'Store basic trip info', detail: 'Basic trip metadata (dates, destination, advisor) is cached in the BFF layer so subsequent requests are faster. No components are cached yet.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Trip Status Updated', sub: 'Status = Trip Identified', detail: 'The trip_status field in the Trips DB is updated to "Trip Identified". This triggers the trip to become visible in API responses.' },
+        { type: 'task', taskType: 'send', label: 'Advisor Field Set', sub: 'Advisor assigned to trip', detail: 'The advisor relation field is populated, linking this trip to a specific ops advisor who will manage it.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Assign Advisor', sub: 'Set advisor field', detail: 'A specific advisor is assigned to manage this trip. The advisor field in the Trips DB is updated with the advisor relation.' },
+        { type: 'task', taskType: 'manual', label: 'Set Status: Trip Identified', sub: 'Begin scoping', detail: 'The advisor advances the trip status to "Trip Identified", signaling that scoping has begun. This makes the trip visible to the client for the first time.' }
+      ]
+    },
+    flows: [
+      { from: 'Ops', to: 'Notion', label: 'Update Trip Status' },
+      { from: 'Notion', to: 'Backend', label: 'Poll detects change' },
+      { from: 'Backend', to: 'Client', label: 'Trip appears in list' }
+    ]
+  },
+  {
+    id: 'outline',
+    name: 'Outline',
+    color: '#a78bfa',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'At a Glance Timeline', sub: 'Draft view, no badges', detail: 'The "At a Glance" section shows a draft timeline of the trip. Components appear but without status badges since they are still being worked on by the advisor.' },
+        { type: 'task', taskType: 'user', label: 'Day-by-Day Cards', sub: 'View-only, no action buttons', detail: 'Trip components are rendered as day-by-day cards. They are view-only at this stage -- no decision buttons (approve/decline) are shown because the components are not yet ready for review.' },
+        { type: 'task', taskType: 'user', label: 'Insider Tips Visible', sub: 'Accordion section', detail: 'If the advisor has added insider tips (transportation, money, local customs), they appear in a collapsible accordion section on the trip page.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'Poll Returns Components', sub: 'GET /trips/:id includes components', detail: 'The 60-second poll now returns component data alongside trip metadata. Each component includes type, title, dates, and the "Working on it" status.' },
+        { type: 'task', taskType: 'service', label: 'Cache Component List', sub: 'Store component metadata', detail: 'Component list data is cached at the BFF layer to reduce Notion API calls and improve response times for subsequent requests.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Components Created', sub: 'Linked to trip, Status = Working on it', detail: 'Trip component records (flights, hotels, activities, transfers) are created in the Trip Components DB and linked to the parent trip. Their client_facing_status is set to "Working on it".' },
+        { type: 'task', taskType: 'send', label: 'Tips Fields Populated', sub: 'Insider tips added', detail: 'The insider tips fields (transportation, money, local tips) are populated on the trip record in Notion.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Add Draft Components', sub: 'Working on it status', detail: 'The advisor creates trip components (flights, hotels, activities, transfers) in Notion. Each component starts with client_facing_status = "Working on it".' },
+        { type: 'task', taskType: 'manual', label: 'Add Reasoning + Images', sub: 'Optional for V1', detail: 'The advisor can optionally add AI-generated reasoning text and curated images to components. This is optional for V1 MVP but adds richness to the client experience.' },
+        { type: 'task', taskType: 'manual', label: 'Add Insider Tips', sub: 'Transportation, money, etc.', detail: 'The advisor adds destination-specific insider tips covering transportation options, money/tipping customs, and other local knowledge.' }
+      ]
+    },
+    flows: [
+      { from: 'Ops', to: 'Notion', label: 'Create component records' },
+      { from: 'Notion', to: 'Backend', label: 'Components in poll response' },
+      { from: 'Backend', to: 'Client', label: 'UI renders draft view' }
+    ]
+  },
+  {
+    id: 'itinerary-review',
+    name: 'Itinerary Review',
+    color: '#f59e0b',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'Decision Buttons Visible', sub: 'Approve / Decline / Request Changes', detail: 'Each component card now shows interactive decision buttons. The client can approve (thumbs up), decline (thumbs down), or request changes which opens the comment flow.' },
+        { type: 'gateway', label: 'Member Decision?', detail: 'Decision gateway: Approve sets a green checkmark badge on the component card. Decline dims the card and marks it for replacement. Request Changes auto-creates a comment/task for the ops team to respond to.' },
+        { type: 'task', taskType: 'user', label: 'Comments Open', sub: 'Post and read comments', detail: 'The comments section is active. The client can post comments (client_requests field) and read advisor responses (ops_response field). Comments are two plain text fields per record, not JSON arrays.' },
+        { type: 'task', taskType: 'user', label: 'At a Glance + Badges', sub: 'Status badges visible', detail: 'The At a Glance timeline now shows status badges on each component: approved (green), declined (red), needs input (amber). This gives the client a quick overview of decision progress.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'PATCH /decision', sub: 'Optimistic UI + write queue', detail: 'When the client makes a decision, the app immediately updates the UI (optimistic update) while the BFF queues the write to Notion at 2 req/sec. The write queue ensures rate limits are respected.' },
+        { type: 'task', taskType: 'service', label: 'POST /comments', sub: '2 req/sec rate limit', detail: 'Comments are posted through the BFF with a 2 req/sec rate limit. Each comment creates a record in the Comments DB with client_requests and ops_response text fields.' },
+        { type: 'task', taskType: 'service', label: 'Write Queue -> Notion API', sub: '3 req/sec limit', detail: 'The BFF write queue drains to the Notion API at 3 req/sec (Notion rate limit). Failed writes are retried with exponential backoff. Idempotency keys prevent duplicate writes.' },
+        { type: 'task', taskType: 'service', label: '60s Poll Confirms', sub: 'Server state matches optimistic', detail: 'The 60-second poll confirms that optimistic UI updates match the actual server state. If a conflict is detected, the server state wins and the UI is corrected.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Component Status Updated', sub: 'Ready for approval / Need your input', detail: 'Component client_facing_status is updated to "Ready for approval" or "Need your input" depending on the advisor workflow. These statuses control which decision buttons appear.' },
+        { type: 'task', taskType: 'send', label: 'Auto-Create Task', sub: 'On member action', detail: 'When a member takes an action (decline, request changes), Notion automatically creates a Task record in the Task DB. This appears in the ops advisor Task Dashboard for follow-up.' },
+        { type: 'task', taskType: 'send', label: 'Comment Record Created', sub: 'In Comments DB', detail: 'Comment records are created in the Comments DB with two text fields: client_requests (what the member wrote) and ops_response (what the advisor replies). This is NOT a JSON array -- it is two plain text fields per record.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: "Mark 'Ready for Approval'", sub: 'Set component client_facing_status', detail: 'The advisor marks components as "Ready for Approval" by updating the client_facing_status field. This triggers decision buttons to appear on the client mobile app.' },
+        { type: 'task', taskType: 'manual', label: 'Monitor Decisions', sub: 'Check Task Dashboard', detail: 'The advisor monitors the Task Dashboard in Notion/Command Center for client decisions. Auto-created tasks appear when clients decline or request changes.' },
+        { type: 'task', taskType: 'manual', label: 'Respond to Comments', sub: 'Post Maestro comments', detail: 'The advisor reads client_requests and writes ops_response in the Comments DB. These responses are visible to the client in the mobile app comment thread.' },
+        { type: 'task', taskType: 'manual', label: 'Create Replacements', sub: 'If member declines', detail: 'If a member declines a component, the advisor creates replacement component options. The declined component is hidden from the client view and the new options appear for review.' }
+      ]
+    },
+    flows: [
+      { from: 'Client', to: 'Backend', label: 'PATCH /decision' },
+      { from: 'Client', to: 'Backend', label: 'POST /comments' },
+      { from: 'Backend', to: 'Notion', label: 'Write queue -> Notion API' },
+      { from: 'Notion', to: 'Notion', label: 'Auto-create task' },
+      { from: 'Notion', to: 'Backend', label: '60s poll confirms' },
+      { from: 'Backend', to: 'Client', label: 'Optimistic UI confirmed' },
+      { from: 'Ops', to: 'Notion', label: 'Update component status' }
+    ]
+  },
+  {
+    id: 'booking-in-progress',
+    name: 'Booking In Progress',
+    color: '#f97316',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'Decision Buttons HIDDEN', sub: 'Locked, cannot change', detail: 'Decision buttons are removed from component cards. The client can no longer approve, decline, or request changes. The decision phase is over and bookings are being made.' },
+        { type: 'task', taskType: 'user', label: 'Comments Still Open', sub: 'Can post but not decide', detail: 'The comment thread remains open so clients can ask questions, but decision endpoints return 403 Forbidden. Communication continues but decisions are locked.' },
+        { type: 'task', taskType: 'user', label: 'Progress Visible', sub: 'At a Glance: confirmed items only', detail: 'The At a Glance view filters to show only confirmed/approved components. Declined components are hidden. The client sees a clean view of what is being booked.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'Decision Endpoints Return 403', sub: 'Decisions locked', detail: 'PATCH /decision endpoints return 403 Forbidden during this phase. The BFF checks the trip status and rejects any decision attempts. Only comments are allowed.' },
+        { type: 'task', taskType: 'service', label: 'Return Only Confirmed', sub: 'Filter non-approved components', detail: 'The API response filters out declined/hidden components. Only approved and booked components are returned to the client, providing a clean itinerary view.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Component: Booked', sub: 'Conf numbers added', detail: 'As the advisor books each component with external providers, they update the component status to "Booked" and add confirmation numbers, booking references, and addresses.' },
+        { type: 'task', taskType: 'send', label: 'Declined Components Hidden', sub: 'From client view', detail: 'Components that were declined during the Itinerary Review phase are marked as hidden. They are no longer returned in API responses to the client.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Book with Providers', sub: 'External bookings', detail: 'The advisor contacts hotels, airlines, activity providers, and transfer companies to make actual bookings. This happens outside the Maestro system.' },
+        { type: 'task', taskType: 'manual', label: 'Confirmed -> Booked', sub: 'Add conf numbers', detail: 'As each booking is confirmed, the advisor updates the component in Notion: status to "Booked", adds confirmation number, booking reference, and property address/details.' },
+        { type: 'task', taskType: 'manual', label: 'Respond to Comments', sub: 'Comments still open', detail: 'The advisor continues to respond to client comments during the booking phase. Communication remains open even though decisions are locked.' }
+      ]
+    },
+    flows: [
+      { from: 'Ops', to: 'Notion', label: 'Update to Booked + conf#' },
+      { from: 'Notion', to: 'Backend', label: 'Poll returns locked state' },
+      { from: 'Backend', to: 'Client', label: '403 on decision, view updates' }
+    ]
+  },
+  {
+    id: 'booking-complete',
+    name: 'Booking Complete',
+    color: '#10b981',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'Finalized View', sub: 'Conf numbers, addresses visible', detail: 'The trip page shows the finalized itinerary with all confirmation numbers, property addresses, and booking details visible. This is the "travel document" view the client uses during their trip.' },
+        { type: 'task', taskType: 'user', label: 'Planning Feedback Modal', sub: 'Rate 1-5 + tags, auto-triggers', detail: 'A feedback modal automatically appears asking the client to rate the planning experience (1-5 stars) and select tags (communication, speed, options quality, etc.). This is the planning-phase feedback.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'Return Finalized Data', sub: 'Conf numbers in response', detail: 'The API response now includes confirmation numbers, addresses, and all booking details. The data is flagged as finalized so the UI can render the complete travel document view.' },
+        { type: 'task', taskType: 'service', label: 'Trigger Feedback Modal', sub: 'Planning feedback logic', detail: 'The BFF includes a flag in the response that triggers the planning feedback modal on the client. This fires once when the trip first reaches "Booking Complete" status.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Trip Status = Booking Complete', sub: 'Finalized view flag set', detail: 'The trip_status is updated to "Booking Complete". This signals to the API that all bookings are confirmed and the finalized view should be rendered.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Verify All Booked', sub: 'All conf numbers entered', detail: 'The advisor verifies that every approved component has been booked and has a confirmation number. This is a quality check before advancing the trip status.' },
+        { type: 'task', taskType: 'manual', label: 'Advance to Booking Complete', sub: 'Trip status change', detail: 'The advisor advances the trip status to "Booking Complete" in Notion. This triggers the finalized view and planning feedback modal for the client.' }
+      ]
+    },
+    flows: [
+      { from: 'Ops', to: 'Notion', label: 'Set Booking Complete' },
+      { from: 'Notion', to: 'Backend', label: 'Finalized flag detected' },
+      { from: 'Backend', to: 'Client', label: 'Feedback modal triggered' },
+      { from: 'Client', to: 'Backend', label: 'POST /feedback' }
+    ]
+  },
+  {
+    id: 'on-trip',
+    name: 'On Trip',
+    color: '#06b6d4',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'Read-Only Itinerary', sub: 'No interactive elements', detail: 'The trip page is fully read-only. No decision buttons, no feedback modals. The client uses this as their travel reference document with all confirmation numbers and details.' },
+        { type: 'task', taskType: 'user', label: 'Insider Tips Prominent', sub: 'Transportation, tips, etc.', detail: 'Insider tips are prominently displayed since the client is actively traveling. Transportation advice, tipping customs, and local tips are easily accessible.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'Serve Cached Data', sub: 'Minimal activity', detail: 'The BFF serves primarily cached data during the On Trip phase. Minimal Notion API activity since the trip data is static. Offline cached data is available on the device.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Trip Status = On Trip', sub: 'Data is static', detail: 'The trip_status is set to "On Trip". The data is effectively frozen -- no component changes are expected unless there is an emergency (flight delay, cancellation).' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Monitor Live Issues', sub: 'Flight delays, changes', detail: 'The advisor monitors for any live issues during the trip: flight delays, cancellations, hotel problems. They can make emergency updates if needed.' },
+        { type: 'task', taskType: 'manual', label: 'Respond to Urgent Comments', sub: 'If any', detail: 'If the client posts urgent comments during their trip (e.g., hotel issue, missed transfer), the advisor responds as quickly as possible.' }
+      ]
+    },
+    flows: [
+      { from: 'Notion', to: 'Backend', label: 'Static data served' },
+      { from: 'Backend', to: 'Client', label: 'Read-only view' }
+    ]
+  },
+  {
+    id: 'post-trip',
+    name: 'Post Trip',
+    color: '#ec4899',
+    lanes: {
+      client: [
+        { type: 'task', taskType: 'user', label: 'Post-Trip Feedback Modal', sub: 'Rate trip 1-5 + tags', detail: 'A feedback modal asks the client to rate their overall trip experience (1-5 stars) and select relevant tags. This is separate from the planning feedback collected at Booking Complete.' },
+        { type: 'task', taskType: 'user', label: 'Welcome Back Message', sub: 'Read-only trip view', detail: 'The trip page shows a "Welcome Back" message with the read-only itinerary preserved as a trip memory. The client can revisit their trip details anytime.' },
+        { type: 'event-end', label: 'Trip Complete', detail: 'The trip lifecycle is complete. The trip remains accessible in the app as a historical record but no further actions are possible.' }
+      ],
+      backend: [
+        { type: 'task', taskType: 'service', label: 'POST /feedback', sub: 'Trip rating + tags', detail: 'The feedback endpoint accepts the trip rating (1-5) and selected tags. It writes the feedback to Notion and triggers an urgent task if the rating is 2 or below.' },
+        { type: 'task', taskType: 'service', label: 'Create Urgent Task', sub: 'If low rating', detail: 'If the trip feedback rating is 2 stars or below, the BFF automatically creates an urgent task in the Task DB flagged for immediate advisor follow-up.' }
+      ],
+      notion: [
+        { type: 'task', taskType: 'send', label: 'Trip Status = Post Trip', sub: 'Feedback data written', detail: 'The trip_status is updated to "Post Trip". Feedback data (rating, tags, comments) is written to the trip record in Notion.' },
+        { type: 'task', taskType: 'send', label: 'Urgent Task Created', sub: 'If rating <= 2 stars', detail: 'If the feedback rating is 2 or below, an urgent task is automatically created in the Task DB. This ensures low-satisfaction trips get immediate attention from the ops team.' }
+      ],
+      ops: [
+        { type: 'task', taskType: 'manual', label: 'Review Feedback', sub: 'Flag low ratings <= 2 stars', detail: 'The advisor reviews trip feedback. Ratings of 2 stars or below are automatically flagged as urgent tasks requiring follow-up contact with the client.' },
+        { type: 'task', taskType: 'manual', label: 'Archive Trip', sub: 'Move to Post Trip', detail: 'The advisor archives the trip by setting the status to "Post Trip". The trip data is preserved but the trip is considered complete.' }
+      ]
+    },
+    flows: [
+      { from: 'Client', to: 'Backend', label: 'POST /feedback' },
+      { from: 'Backend', to: 'Notion', label: 'Write feedback + task' },
+      { from: 'Ops', to: 'Notion', label: 'Archive trip' }
+    ]
+  }
+];
+
+// Lane configuration: order, labels, colors
+const bpmnLaneConfig = [
+  { key: 'client',  label: 'Client (Mobile App)', headerClass: 'lane-client',  color: '#3b82f6' },
+  { key: 'backend', label: 'Backend / BFF API',   headerClass: 'lane-backend', color: '#8b5cf6' },
+  { key: 'notion',  label: 'Notion (SoR)',        headerClass: 'lane-notion',  color: '#10b981' },
+  { key: 'ops',     label: 'Ops (Advisor)',        headerClass: 'lane-ops',     color: '#f59e0b' }
+];
+
+let bpmnCurrentPhase = 0;
+let bpmnFullMode = false;
+let bpmnActiveNode = null; // track { phaseIdx, lane, nodeIdx }
+
+function renderBpmnPhaseTabs() {
+  const container = document.getElementById('bpmn-phase-tabs');
+  if (!container) return;
+  container.innerHTML = bpmnPhases.map((p, i) => {
+    const activeClass = i === bpmnCurrentPhase ? 'active' : '';
+    return `<button class="bpmn-phase-tab ${activeClass}" onclick="showBpmnPhase(${i})">
+      <span class="bpmn-phase-dot" style="background:${p.color}"></span>${p.name}
+    </button>`;
+  }).join('');
+}
+
+function renderBpmnNode(node, phaseIdx, laneKey, nodeIdx, compact) {
+  const clickAttr = `onclick="showBpmnNodeDetail(${phaseIdx},'${laneKey}',${nodeIdx})"`;
+  const isActive = bpmnActiveNode &&
+    bpmnActiveNode.phaseIdx === phaseIdx &&
+    bpmnActiveNode.lane === laneKey &&
+    bpmnActiveNode.nodeIdx === nodeIdx;
+  const activeClass = isActive ? ' active' : '';
+
+  if (node.type === 'event-start') {
+    return `<div class="bpmn-event-start" ${clickAttr} style="cursor:pointer" title="${node.label || 'Start'}"></div>`;
+  }
+  if (node.type === 'event-end') {
+    return `<div class="bpmn-event-end" ${clickAttr} style="cursor:pointer" title="${node.label || 'End'}"></div>`;
+  }
+  if (node.type === 'gateway') {
+    return `<div class="bpmn-gateway" ${clickAttr} title="${node.label || 'Gateway'}"><span class="gw-icon">X</span></div>`;
+  }
+  if (node.type === 'note') {
+    return `<div class="bpmn-note" ${clickAttr} style="cursor:pointer">${node.label}</div>`;
+  }
+  // Regular task
+  const typeClass = node.taskType ? node.taskType + '-task' : '';
+  return `<div class="bpmn-task ${typeClass}${activeClass}" ${clickAttr}>
+    <div class="bpmn-task-label">${node.label}</div>
+    ${node.sub ? `<div class="bpmn-task-sub">${node.sub}</div>` : ''}
+  </div>`;
+}
+
+function renderBpmnArrow(compact) {
+  const cls = compact ? 'bpmn-arrow bpmn-arrow-compact' : 'bpmn-arrow';
+  return `<div class="${cls}"><svg width="24" height="12" viewBox="0 0 24 12"><line x1="0" y1="6" x2="18" y2="6" stroke="#4a5568" stroke-width="1.5"/><polygon points="17,3 22,6 17,9" fill="#4a5568"/></svg></div>`;
+}
+
+function joinNodesWithArrows(nodesHtml, compact) {
+  if (nodesHtml.length <= 1) return nodesHtml.join('');
+  return nodesHtml.reduce((acc, node, i) => {
+    if (i === 0) return node;
+    return acc + renderBpmnArrow(compact) + node;
+  }, '');
+}
+
+function renderBpmnFlows(flows) {
+  if (!flows || flows.length === 0) return '';
+  return `<div style="padding:2px 0">` + flows.map(f => {
+    return `<div class="bpmn-flow-row">
+      <svg width="16" height="10" viewBox="0 0 16 10"><line x1="0" y1="5" x2="12" y2="5" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="3,2"/><polygon points="12,2 16,5 12,8" fill="#60a5fa"/></svg>
+      <span class="flow-from">${f.from}</span>
+      <span class="flow-label">${f.label}</span>
+      <svg width="10" height="10" viewBox="0 0 10 10"><polygon points="2,2 8,5 2,8" fill="#60a5fa" opacity=".5"/></svg>
+      <span class="flow-to">${f.to}</span>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+function renderBpmnPhase(idx) {
+  const phase = bpmnPhases[idx];
+  if (!phase) return;
+  const container = document.getElementById('bpmn-diagram');
+  if (!container) return;
+
+  let html = '';
+  // Phase header
+  html += `<div style="padding:12px 18px;background:#111122;border-bottom:1px solid #1e1e35;display:flex;align-items:center;gap:10px">
+    <span class="bpmn-phase-dot" style="background:${phase.color};width:10px;height:10px"></span>
+    <span style="font-size:14px;font-weight:600;color:#fff">${phase.name}</span>
+    <span style="font-size:11px;color:#6b7280;margin-left:auto">Phase ${idx + 1} of ${bpmnPhases.length}</span>
+  </div>`;
+
+  // Swim lanes
+  html += `<div class="bpmn-pool">`;
+  bpmnLaneConfig.forEach(lane => {
+    const nodes = phase.lanes[lane.key] || [];
+    html += `<div class="bpmn-lane">
+      <div class="bpmn-lane-header ${lane.headerClass}">${lane.label}</div>
+      <div class="bpmn-lane-content">
+        ${nodes.length > 0 ? joinNodesWithArrows(nodes.map((n, ni) => renderBpmnNode(n, idx, lane.key, ni, false)), false) : '<span style="font-size:10px;color:#4a4a5a;font-style:italic">No activity</span>'}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Message flows
+  if (phase.flows && phase.flows.length > 0) {
+    html += `<div style="background:#0f0f1a;border-top:1px solid #1e1e35;padding:6px 0">`;
+    html += `<div style="padding:2px 18px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#4a5568;margin-bottom:2px">Message Flows</div>`;
+    html += renderBpmnFlows(phase.flows);
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderBpmnFullDiagram() {
+  const container = document.getElementById('bpmn-full-diagram');
+  if (!container) return;
+
+  // Lane labels column + 8 phase columns
+  let html = '';
+
+  // Lane labels column
+  html += `<div style="display:inline-block;vertical-align:top;width:140px;position:sticky;left:0;z-index:2;background:#0f0f1a">`;
+  // Header spacer
+  html += `<div style="height:40px;background:#14142a;border-bottom:1px solid #1e1e35;border-right:1px solid #1e1e35"></div>`;
+  bpmnLaneConfig.forEach(lane => {
+    html += `<div style="height:80px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid #1a1a30;border-right:1px solid #1e1e35;background:#0f0f1a">
+      <span style="font-size:10px;font-weight:600;color:${lane.color};text-transform:uppercase;letter-spacing:.5px">${lane.label}</span>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Phase columns
+  bpmnPhases.forEach((phase, pi) => {
+    html += `<div class="bpmn-full-phase">`;
+    // Phase header
+    html += `<div class="bpmn-full-phase-header" style="height:40px">
+      <span class="bpmn-phase-dot" style="background:${phase.color}"></span>${phase.name}
+    </div>`;
+    // Lanes
+    bpmnLaneConfig.forEach(lane => {
+      const nodes = phase.lanes[lane.key] || [];
+      html += `<div class="bpmn-full-lane" style="height:80px">
+        ${nodes.length > 0 ? joinNodesWithArrows(nodes.map((n, ni) => renderBpmnNode(n, pi, lane.key, ni, true)), true) : '<span style="font-size:9px;color:#4a4a5a">--</span>'}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleBpmnMode() {
+  bpmnFullMode = !bpmnFullMode;
+  const btn = document.getElementById('bpmn-mode-toggle');
+  const tabbedView = document.getElementById('bpmn-tabbed-view');
+  const fullView = document.getElementById('bpmn-full-view');
+  const tabs = document.getElementById('bpmn-phase-tabs');
+
+  if (bpmnFullMode) {
+    btn.textContent = 'Phase View';
+    btn.style.borderColor = '#10b981';
+    btn.style.color = '#10b981';
+    tabbedView.classList.add('hidden');
+    fullView.classList.remove('hidden');
+    tabs.style.opacity = '0.3';
+    tabs.style.pointerEvents = 'none';
+    renderBpmnFullDiagram();
+  } else {
+    btn.textContent = 'Full Diagram';
+    btn.style.borderColor = '#8b5cf6';
+    btn.style.color = '#8b5cf6';
+    tabbedView.classList.remove('hidden');
+    fullView.classList.add('hidden');
+    tabs.style.opacity = '1';
+    tabs.style.pointerEvents = 'auto';
+    renderBpmnPhase(bpmnCurrentPhase);
+  }
+}
+
+function showBpmnPhase(idx) {
+  if (idx < 0 || idx >= bpmnPhases.length) return;
+  bpmnCurrentPhase = idx;
+  bpmnActiveNode = null;
+  document.getElementById('bpmn-detail').classList.add('hidden');
+  renderBpmnPhaseTabs();
+  if (!bpmnFullMode) {
+    renderBpmnPhase(idx);
+  }
+}
+
+function showBpmnNodeDetail(phaseIdx, lane, nodeIdx) {
+  const phase = bpmnPhases[phaseIdx];
+  if (!phase) return;
+  const nodes = phase.lanes[lane];
+  if (!nodes || !nodes[nodeIdx]) return;
+  const node = nodes[nodeIdx];
+
+  bpmnActiveNode = { phaseIdx, lane, nodeIdx };
+
+  // Find lane label
+  const laneInfo = bpmnLaneConfig.find(l => l.key === lane);
+  const laneName = laneInfo ? laneInfo.label : lane;
+
+  const detailPanel = document.getElementById('bpmn-detail');
+  const detailTitle = document.getElementById('bpmn-detail-title');
+  const detailContent = document.getElementById('bpmn-detail-content');
+
+  // Determine type badge
+  let typeBadge = '';
+  if (node.type === 'event-start') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(16,185,129,.15);color:#10b981;margin-right:8px">START EVENT</span>';
+  else if (node.type === 'event-end') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(239,68,68,.15);color:#ef4444;margin-right:8px">END EVENT</span>';
+  else if (node.type === 'gateway') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(245,158,11,.15);color:#f59e0b;margin-right:8px">GATEWAY</span>';
+  else if (node.type === 'note') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(245,158,11,.1);color:#f59e0b;margin-right:8px">NOTE</span>';
+  else if (node.taskType === 'user') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(59,130,246,.15);color:#3b82f6;margin-right:8px">USER TASK</span>';
+  else if (node.taskType === 'service') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(139,92,246,.15);color:#8b5cf6;margin-right:8px">SERVICE TASK</span>';
+  else if (node.taskType === 'manual') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(245,158,11,.15);color:#f59e0b;margin-right:8px">MANUAL TASK</span>';
+  else if (node.taskType === 'send') typeBadge = '<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(16,185,129,.15);color:#10b981;margin-right:8px">SEND TASK</span>';
+
+  detailTitle.innerHTML = `${typeBadge}<span style="color:${laneInfo ? laneInfo.color : '#9ca3af'}">${laneName}</span> &middot; <span style="color:${phase.color}">${phase.name}</span>`;
+  detailContent.innerHTML = `
+    <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:6px">${node.label}</div>
+    ${node.sub ? `<div style="font-size:12px;color:#7a8fa8;margin-bottom:10px">${node.sub}</div>` : ''}
+    <div style="font-size:13px;color:#a8b4c4;line-height:1.7">${node.detail || 'No additional details available.'}</div>
+  `;
+
+  detailPanel.classList.remove('hidden');
+
+  // Re-render to show active state
+  if (!bpmnFullMode) {
+    renderBpmnPhase(phaseIdx);
+  }
+}
+
+// ============================================================
 // PAGE NAVIGATION (Section-at-a-time)
 // ============================================================
-const pageOrder = ['architecture','databases','api-reference','state-machines','sequences','view-logic','edge-cases','performance'];
-const pageNames = ['Architecture','Databases','API Reference','State Machines','Sequences','View Logic','Edge Cases','Performance'];
+const pageOrder = ['architecture','databases','api-reference','state-machines','sequences','view-logic','edge-cases','performance','trip-lifecycle'];
+const pageNames = ['Architecture','Databases','API Reference','State Machines','Sequences','View Logic','Edge Cases','Performance','Trip Lifecycle'];
 let currentPageIdx = 0;
 const visitedPages = new Set();
 
@@ -1437,6 +2008,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSequence();
   renderEdgeCases();
   updateSeqCounter();
+  renderBpmnPhaseTabs();
+  renderBpmnPhase(0);
 
   // Check URL hash for initial section
   const hash = location.hash.replace('#', '');
