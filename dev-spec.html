@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:false,theme:'dark',themeVariables:{darkMode:true,background:'#111122',primaryColor:'#141425',primaryTextColor:'#c8d4e4',primaryBorderColor:'#252540',lineColor:'#4a4a6a',secondaryColor:'#1e1e35',tertiaryColor:'#0a5d47',noteBkgColor:'#1a1a30',noteTextColor:'#c8d4e4',actorBkg:'#141425',actorBorder:'#252540',actorTextColor:'#c8d4e4',signalColor:'#93ddff',labelBoxBkgColor:'#111122',labelTextColor:'#c8d4e4'}});</script>
 <script>
 tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','system-ui','sans-serif'],mono:['JetBrains Mono','monospace']}}}}
 </script>
@@ -201,6 +203,66 @@ code,pre,.code-font{font-family:'JetBrains Mono',monospace}
     <div></div>
   </div>
 
+  <!-- Mermaid Sequence Diagram -->
+  <div class="panel mb-6" style="overflow-x:auto">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="text-xs font-bold uppercase tracking-wider text-blue-400">System Sequence Diagram</span>
+      <span class="tag" style="background:rgba(147,221,255,.12);color:#93ddff">Mermaid</span>
+      <a href="diagrams/system-architecture-sequence.mmd" target="_blank" class="proto-link ml-auto text-[11px]">View Raw Mermaid &rarr;</a>
+    </div>
+    <div class="mermaid" id="arch-mermaid">
+sequenceDiagram
+    participant Member as Member (Mobile)
+    participant RN as React Native
+    participant BFF as BFF API
+    participant WQ as Write Queue
+    participant NAPI as Notion API
+    participant NDB as Notion DBs
+
+    rect rgb(20, 60, 80)
+    Note over Member, NDB: Flow 1 — Trip Page Load
+    Member->>RN: Opens trip page
+    RN->>BFF: GET /trips/:id (JWT)
+    BFF->>NAPI: Query Trips DB
+    NAPI->>NDB: Read trip page
+    NDB-->>NAPI: Trip + relations
+    NAPI-->>BFF: Trip JSON
+    BFF->>NAPI: Query Components DB
+    NAPI->>NDB: Read components
+    NDB-->>NAPI: Components[]
+    NAPI-->>BFF: Components JSON
+    BFF-->>RN: Combined response
+    RN-->>Member: Render view
+    Note over RN: Start 60s poll
+    end
+
+    rect rgb(20, 70, 40)
+    Note over Member, NDB: Flow 2 — Approve Component
+    Member->>RN: Taps thumbs up
+    RN->>RN: Optimistic UI
+    RN->>BFF: PATCH /decision
+    BFF->>WQ: Enqueue (2 req/s)
+    WQ->>NAPI: Update Component
+    NAPI->>NDB: Decision=Approved
+    WQ->>NAPI: Create Task
+    BFF-->>RN: 200 OK
+    Note over RN: Next poll confirms
+    end
+
+    rect rgb(50, 40, 80)
+    Note over Member, NDB: Flow 3 — Post Comment
+    Member->>RN: Sends comment
+    RN->>BFF: POST /comments
+    BFF->>WQ: Enqueue (2 req/s)
+    WQ->>NAPI: Create Comment
+    NAPI->>NDB: New comment
+    WQ->>NAPI: Create Task
+    BFF-->>RN: 201 Created
+    RN-->>Member: Toast sent
+    end
+    </div>
+  </div>
+
   <!-- Architecture detail panel -->
   <div id="arch-detail" class="panel hidden">
     <div class="flex items-center justify-between mb-3">
@@ -215,6 +277,108 @@ code,pre,.code-font{font-family:'JetBrains Mono',monospace}
 <section id="databases" class="mb-16">
   <h2 class="section-title">Databases</h2>
   <p class="section-sub">3 Notion database schemas — new fields marked in green</p>
+
+  <!-- ER Diagram -->
+  <div class="panel mb-6" style="overflow-x:auto">
+    <div class="flex items-center gap-2 mb-4">
+      <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Entity Relationship Diagram</span>
+      <span class="tag tag-new">DBML</span>
+      <a href="diagrams/data-model.dbml" target="_blank" class="proto-link ml-auto text-[11px]">View Raw DBML &rarr;</a>
+    </div>
+    <div style="display:flex;gap:24px;align-items:flex-start;min-width:900px;padding:8px 0">
+      <!-- Trips Table -->
+      <div style="flex:1;min-width:280px">
+        <div style="background:#0a5d47;border-radius:8px 8px 0 0;padding:10px 16px;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#80f0c8" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <span style="color:#80f0c8;font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace">trips</span>
+        </div>
+        <div style="background:#111122;border:1px solid #252540;border-top:0;border-radius:0 0 8px 8px;padding:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px">
+          <div style="padding:4px 12px;color:#fcc93c;border-bottom:1px solid #1a1a30">id <span style="color:#5a6a80;font-style:italic;margin-left:8px">string PK</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">name <span style="color:#a8b4c8;margin-left:8px">string</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">status <span style="color:#d4a0ff;margin-left:8px">trip_status</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">trip_page_type <span style="color:#d4a0ff;margin-left:8px">enum</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">destinations <span style="color:#a8b4c8;margin-left:8px">string[]</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">start_date / end_date <span style="color:#a8b4c8;margin-left:8px">date</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">planning_rating <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">planning_*_tags <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">trip_rating <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">trip_*_tags <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">cover_image_url <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8">tips_* (4 fields) <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+        </div>
+        <div style="text-align:center;color:#4a4a6a;font-size:10px;padding:4px">22 fields total | 16 new</div>
+      </div>
+
+      <!-- Relationship Arrow 1 -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px;min-width:60px">
+        <div style="color:#4a4a6a;font-size:10px;margin-bottom:4px">1</div>
+        <div style="width:50px;height:2px;background:#4a4a6a;position:relative">
+          <div style="position:absolute;right:-4px;top:-4px;width:0;height:0;border-left:8px solid #4a4a6a;border-top:5px solid transparent;border-bottom:5px solid transparent"></div>
+        </div>
+        <div style="color:#4a4a6a;font-size:10px;margin-top:4px">N</div>
+        <div style="color:#5a6a80;font-size:9px;margin-top:2px;text-align:center">trip FK</div>
+      </div>
+
+      <!-- Components Table -->
+      <div style="flex:1;min-width:280px">
+        <div style="background:#25466e;border-radius:8px 8px 0 0;padding:10px 16px;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#93ddff" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <span style="color:#93ddff;font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace">components</span>
+        </div>
+        <div style="background:#111122;border:1px solid #252540;border-top:0;border-radius:0 0 8px 8px;padding:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px">
+          <div style="padding:4px 12px;color:#fcc93c;border-bottom:1px solid #1a1a30">id <span style="color:#5a6a80;font-style:italic;margin-left:8px">string PK</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">name <span style="color:#a8b4c8;margin-left:8px">string</span></div>
+          <div style="padding:4px 12px;color:#93ddff;border-bottom:1px solid #1a1a30">trip <span style="color:#5a6a80;margin-left:8px;font-style:italic">FK -> trips.id</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">category <span style="color:#d4a0ff;margin-left:8px">enum(7)</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">client_facing_status <span style="color:#d4a0ff;margin-left:8px">enum(6)</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">client_decision <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW enum(4)</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">display_order <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">option_group <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">image_urls <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">advisor_reasoning <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8;border-bottom:1px solid #1a1a30">pricing (cash/pts/tax) <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+          <div style="padding:4px 12px;color:#98f5b8">conf_number <span style="color:#5a6a80;margin-left:8px;font-style:italic">NEW</span></div>
+        </div>
+        <div style="text-align:center;color:#4a4a6a;font-size:10px;padding:4px">18 fields total | 13 new</div>
+      </div>
+
+      <!-- Relationship Arrow 2 -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px;min-width:60px">
+        <div style="color:#4a4a6a;font-size:10px;margin-bottom:4px">1</div>
+        <div style="width:50px;height:2px;background:#4a4a6a;position:relative">
+          <div style="position:absolute;right:-4px;top:-4px;width:0;height:0;border-left:8px solid #4a4a6a;border-top:5px solid transparent;border-bottom:5px solid transparent"></div>
+        </div>
+        <div style="color:#4a4a6a;font-size:10px;margin-top:4px">N</div>
+        <div style="color:#5a6a80;font-size:9px;margin-top:2px;text-align:center">component FK</div>
+      </div>
+
+      <!-- Comments Table -->
+      <div style="flex:1;min-width:240px">
+        <div style="background:#5b3a8a;border-radius:8px 8px 0 0;padding:10px 16px;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4a0ff" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          <span style="color:#d4a0ff;font-weight:700;font-size:13px;font-family:'JetBrains Mono',monospace">component_comments</span>
+        </div>
+        <div style="background:#111122;border:1px solid #252540;border-top:0;border-radius:0 0 8px 8px;padding:4px 0;font-family:'JetBrains Mono',monospace;font-size:11px">
+          <div style="padding:4px 12px;color:#fcc93c;border-bottom:1px solid #1a1a30">id <span style="color:#5a6a80;font-style:italic;margin-left:8px">string PK</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">comment <span style="color:#a8b4c8;margin-left:8px">title</span></div>
+          <div style="padding:4px 12px;color:#d4a0ff;border-bottom:1px solid #1a1a30">component <span style="color:#5a6a80;margin-left:8px;font-style:italic">FK -> components.id</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">comment_type <span style="color:#d4a0ff;margin-left:8px">enum(3)</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">status <span style="color:#d4a0ff;margin-left:8px">enum(4)</span></div>
+          <div style="padding:4px 12px;color:#c8d4e4;border-bottom:1px solid #1a1a30">created_time <span style="color:#a8b4c8;margin-left:8px">auto</span></div>
+          <div style="padding:4px 12px;color:#a8b4c8">trip <span style="color:#5a6a80;margin-left:8px;font-style:italic">rollup</span></div>
+        </div>
+        <div style="text-align:center;color:#4a4a6a;font-size:10px;padding:4px">7 fields | NEW database</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:8px 12px;background:#111122;border-radius:6px;display:flex;gap:16px;flex-wrap:wrap">
+      <span style="font-size:10px;color:#5a6a80">Legend:</span>
+      <span style="font-size:10px;color:#fcc93c">Primary Key</span>
+      <span style="font-size:10px;color:#93ddff">Foreign Key</span>
+      <span style="font-size:10px;color:#d4a0ff">Enum/Relation</span>
+      <span style="font-size:10px;color:#98f5b8">New field (V1)</span>
+      <span style="font-size:10px;color:#c8d4e4">Existing field</span>
+    </div>
+  </div>
 
   <!-- DB Tabs -->
   <div class="flex gap-2 mb-4">
@@ -1172,13 +1336,15 @@ function setupScrollSpy(){
 // ============================================================
 // INIT
 // ============================================================
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',async ()=>{
   renderEndpoints();
   renderStateMachine();
   renderSequence();
   renderEdgeCases();
   updateSeqCounter();
   setupScrollSpy();
+  // Render Mermaid diagram
+  try { await mermaid.run({nodes:[document.getElementById('arch-mermaid')]}); } catch(e) { console.warn('Mermaid render:',e); }
 });
 </script>
 </body>
