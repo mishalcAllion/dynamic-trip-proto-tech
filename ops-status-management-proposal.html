@@ -527,30 +527,43 @@ function renderPipelineMockup(){
 function renderComponentBoardMockup(){
   const cols = [
     {name:'Working on it',color:'#a78bfa',cards:[
-      {name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending'},
-      {name:'SFO -> NRT Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Pending'},
-      {name:'Park Hyatt Tokyo',cat:'HOTEL',icon:'&#127976;',decision:'Pending'},
-      {name:'Tsukiji Market Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending'},
-      {name:'Nozomi Shinkansen',cat:'TRAIN',icon:'&#128645;',decision:'Pending'}
+      {name:'Eurostar to Paris',cat:'TRAIN',icon:'&#128646;',decision:'Pending',members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'},
+      {name:'SFO -> NRT Flight',cat:'FLIGHT',icon:'&#9992;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'},
+      {name:'Park Hyatt Tokyo',cat:'HOTEL',icon:'&#127976;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'},
+      {name:'Tsukiji Market Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'},
+      {name:'Nozomi Shinkansen',cat:'TRAIN',icon:'&#128645;',decision:'Pending',members:'Alex W.: Pending | Jennifer P.: Pending'}
     ]},
-    {name:'Need your input',color:'#fbbf24',cards:[{name:'Tower of London Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending'}]},
+    {name:'Need your input',color:'#fbbf24',cards:[{name:'Tower of London Tour',cat:'EXPERIENCE',icon:'&#127968;',decision:'Pending',members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'}]},
     {name:'Ready for approval',color:'#60a5fa',cards:[
-      {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',icon:'&#9992;',decision:'Approved'},
-      {name:'Corinthia London',cat:'HOTEL',icon:'&#127976;',decision:'Pending'},
-      {name:'The Ritz London',cat:'HOTEL',icon:'&#127976;',decision:'Declined'}
+      {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',icon:'&#9992;',decision:'Approved',members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'},
+      {name:'Corinthia London',cat:'HOTEL',icon:'&#127976;',decision:'Pending',members:'John D.: Approved | Susan U.: Pending | Maria K.: Pending'},
+      {name:'The Ritz London',cat:'HOTEL',icon:'&#127976;',decision:'Declined',members:'John D.: Declined | Susan U.: Declined | Maria K.: Pending'}
     ]},
     {name:'On hold',color:'#9ca3af',cards:[]},
-    {name:'Confirmed',color:'#34d399',cards:[{name:'Le Jules Verne',cat:'DINING',icon:'&#127860;',decision:'Approved'}]},
+    {name:'Confirmed',color:'#34d399',cards:[{name:'Le Jules Verne',cat:'DINING',icon:'&#127860;',decision:'Approved',members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'}]},
     {name:'Booked',color:'#10b981',cards:[]}
   ];
   let html = '<div class="notion-board" style="overflow-x:auto"><div style="display:flex;gap:8px;min-width:900px">';
   cols.forEach(col => {
-    html += '<div class="notion-col" style="flex:1;min-width:140px">';
+    html += '<div class="notion-col" style="flex:1;min-width:160px">';
     html += '<div style="font-size:11px;font-weight:600;color:#787774;padding:6px 8px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:'+col.color+';display:inline-block"></span>'+col.name+' <span style="color:#b4b4b0;font-weight:400">'+col.cards.length+'</span></div>';
     col.cards.forEach(card => {
       const dColor = card.decision==='Approved'?'#16a34a':card.decision==='Declined'?'#dc2626':'#d97706';
       const dBg = card.decision==='Approved'?'#dcfce7':card.decision==='Declined'?'#fef2f2':'#fef9c3';
-      html += '<div class="notion-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span>'+card.icon+'</span><span style="font-weight:500;color:#37352f">'+card.name+'</span></div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#f3f2ef;color:#787774">'+card.cat+'</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+dBg+';color:'+dColor+'">'+card.decision+'</span></div></div>';
+      // Render per-member decision pills
+      let membersHtml = '';
+      if(card.members){
+        const parts = card.members.split(' | ');
+        membersHtml = '<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:3px">';
+        parts.forEach(p => {
+          const [name,status] = p.split(': ');
+          const mColor = status==='Approved'?'color:#16a34a':'color:'+(status==='Declined'?'#dc2626':'#9b9b97');
+          const mIcon = status==='Approved'?'&#10003;':status==='Declined'?'&#10005;':'&#9679;';
+          membersHtml += '<span style="font-size:9px;'+mColor+';background:#f7f6f3;padding:1px 5px;border-radius:3px;white-space:nowrap">'+mIcon+' '+name+'</span>';
+        });
+        membersHtml += '</div>';
+      }
+      html += '<div class="notion-card"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span>'+card.icon+'</span><span style="font-weight:500;color:#37352f">'+card.name+'</span></div><div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:#f3f2ef;color:#787774">'+card.cat+'</span><span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+dBg+';color:'+dColor+'">'+card.decision+'</span></div>'+membersHtml+'</div>';
     });
     if(col.cards.length===0) html += '<div style="padding:20px 8px;text-align:center;color:#c8c8c4;font-size:11px">No components</div>';
     html += '</div>';
@@ -610,22 +623,33 @@ function renderCommentsMockup(){
 function renderFinalizationMockup(){
   // Matches actual Notion "Finalization Checklist" view: all components sorted by Display Order
   const rows = [
-    {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',decision:'Approved',decOk:true,status:'Ready for approval',conf:'',confOk:false},
-    {name:'SFO -> NRT Flight',cat:'FLIGHT',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
-    {name:'Corinthia London',cat:'HOTEL',decision:'Pending',decOk:false,status:'Ready for approval',conf:'',confOk:false},
-    {name:'Park Hyatt Tokyo',cat:'HOTEL',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
-    {name:'The Ritz London',cat:'HOTEL',decision:'Declined',decOk:true,status:'Ready for approval',conf:'',confOk:false},
-    {name:'Tsukiji Market Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
-    {name:'Tower of London Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Need your input',conf:'',confOk:false},
-    {name:'Nozomi Shinkansen',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
-    {name:'Eurostar to Paris',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false},
-    {name:'Le Jules Verne',cat:'DINING',decision:'Approved',decOk:true,status:'Confirmed',conf:'JV-2026-1234',confOk:true}
+    {name:'AUS -> LHR Flight (BA UA400)',cat:'FLIGHT',decision:'Approved',decOk:true,status:'Ready for approval',conf:'',confOk:false,members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'},
+    {name:'SFO -> NRT Flight',cat:'FLIGHT',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false,members:'Alex W.: Pending | Jennifer P.: Pending'},
+    {name:'Corinthia London',cat:'HOTEL',decision:'Pending',decOk:false,status:'Ready for approval',conf:'',confOk:false,members:'John D.: Approved | Susan U.: Pending | Maria K.: Pending'},
+    {name:'Park Hyatt Tokyo',cat:'HOTEL',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false,members:'Alex W.: Pending | Jennifer P.: Pending'},
+    {name:'The Ritz London',cat:'HOTEL',decision:'Declined',decOk:true,status:'Ready for approval',conf:'',confOk:false,members:'John D.: Declined | Susan U.: Declined | Maria K.: Pending'},
+    {name:'Tsukiji Market Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false,members:'Alex W.: Pending | Jennifer P.: Pending'},
+    {name:'Tower of London Tour',cat:'EXPERIENCE',decision:'Pending',decOk:false,status:'Need your input',conf:'',confOk:false,members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'},
+    {name:'Nozomi Shinkansen',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false,members:'Alex W.: Pending | Jennifer P.: Pending'},
+    {name:'Eurostar to Paris',cat:'TRAIN',decision:'Pending',decOk:false,status:'Working on it',conf:'',confOk:false,members:'John D.: Pending | Susan U.: Pending | Maria K.: Pending'},
+    {name:'Le Jules Verne',cat:'DINING',decision:'Approved',decOk:true,status:'Confirmed',conf:'JV-2026-1234',confOk:true,members:'John D.: Approved | Susan U.: Approved | Maria K.: Approved'}
   ];
-  let html = '<div class="notion-board" style="overflow-x:auto"><table class="notion-table"><thead><tr><th>Name</th><th>Category</th><th>Client Decision</th><th>Status</th><th>Conf Number</th></tr></thead><tbody>';
+  let html = '<div class="notion-board" style="overflow-x:auto"><table class="notion-table"><thead><tr><th>Name</th><th>Category</th><th>Client Decision</th><th>Member Decisions</th><th>Status</th><th>Conf Number</th></tr></thead><tbody>';
   rows.forEach(r => {
     const decIcon = r.decision==='Approved'?'<span style="color:#16a34a;margin-right:4px">&#10003;</span>':r.decision==='Declined'?'<span style="color:#dc2626;margin-right:4px">&#10005;</span>':'<span style="color:#d97706;margin-right:4px">&#9679;</span>';
     const confCell = r.confOk?'<span style="color:#16a34a">'+r.conf+'</span>':'<span style="color:#dc2626;font-style:italic">Missing</span>';
-    html += '<tr><td style="font-weight:500">'+r.name+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;background:#f3f2ef;color:#787774">'+r.cat+'</span></td><td>'+decIcon+r.decision+'</td><td>'+r.status+'</td><td>'+confCell+'</td></tr>';
+    // Render member decision pills
+    let membersCell = '';
+    if(r.members){
+      const parts = r.members.split(' | ');
+      parts.forEach(p => {
+        const [name,status] = p.split(': ');
+        const mColor = status==='Approved'?'color:#16a34a':status==='Declined'?'color:#dc2626':'color:#9b9b97';
+        const mIcon = status==='Approved'?'&#10003;':status==='Declined'?'&#10005;':'&#9679;';
+        membersCell += '<span style="font-size:9px;'+mColor+';background:#f7f6f3;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-right:2px">'+mIcon+' '+name+'</span>';
+      });
+    }
+    html += '<tr><td style="font-weight:500">'+r.name+'</td><td><span style="font-size:10px;padding:2px 8px;border-radius:3px;background:#f3f2ef;color:#787774">'+r.cat+'</span></td><td>'+decIcon+r.decision+'</td><td>'+membersCell+'</td><td>'+r.status+'</td><td>'+confCell+'</td></tr>';
   });
   html += '</tbody></table>';
   html += '<div style="margin-top:12px;padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:12px;color:#991b1b"><strong>Blockers:</strong> 7 components have no decision. 9 components missing confirmation number. 0 of 10 components in "Booked" status. Neither trip is ready for "Booking Complete".</div>';
