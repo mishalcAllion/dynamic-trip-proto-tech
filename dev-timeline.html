@@ -37,13 +37,13 @@
     </div>
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Backend (TL + SE + Ops)</div>
-      <div class="text-2xl font-bold font-mono text-teal-400">230h</div>
-      <div class="text-xs text-slate-500 mt-1">5 phases across 6 weeks</div>
+      <div class="text-2xl font-bold font-mono text-teal-400">278h</div>
+      <div class="text-xs text-slate-500 mt-1">TL 47h + SE 223h + Ops 8h</div>
     </div>
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Combined Total</div>
-      <div class="text-2xl font-bold font-mono text-slate-100">342h</div>
-      <div class="text-xs text-slate-500 mt-1">~8.5 person-weeks</div>
+      <div class="text-2xl font-bold font-mono text-slate-100">390h</div>
+      <div class="text-xs text-slate-500 mt-1">~9.75 person-weeks</div>
     </div>
     <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
       <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Ship Date</div>
@@ -216,50 +216,44 @@ const MOBILE_TASKS = scheduleChain([
   { id: 'X2',  group: 'mob-xcut',   title: 'Dev Testing & Bug Fixes',  hrs: 32, assignee: 'Waruna' },
 ], '2026-03-23');
 
-// --- Backend tasks (from backend Excel, ~230h total) ---
-// Backend has multiple engineers so sub-tasks within a phase run in parallel,
-// but phases are sequential (S1 -> S2 -> S3 -> S4 -> S5)
+// --- Backend tasks (from backend Excel, 278h total) ---
+// Split by person: TL (47h), SE (223h), Ops (7.5h)
+// TL and SE work in parallel within each phase. Phases are sequential.
 
-// Phase S1 — Foundation: Schemas, Utilities, Config, Ops run in parallel
+// Phase S1 — Foundation
 const beS1 = [
-  { id: 'BE-S',   group: 'be-s1', title: 'Schemas (BE-001..005)',                    hrs: 16, assignee: 'TL+SE' },
-  { id: 'BE-U',   group: 'be-s1', title: 'Utilities (BE-006..011)',                  hrs: 17, assignee: 'TL+SE' },
-  { id: 'BE-C',   group: 'be-s1', title: 'Config & Infra (BE-012..014, INFRA-001)',  hrs: 18, assignee: 'SE' },
-  { id: 'OPS-S1', group: 'be-s1', title: 'Ops Notion Setup (OPS-001..004,006)',      hrs: 7,  assignee: 'Ops' },
+  { id: 'S1-TL',  group: 'be-s1', title: 'S1 Design + Reviews',               hrs: 10, assignee: 'TL' },
+  { id: 'S1-SE',  group: 'be-s1', title: 'S1 Schemas + Utils + Infra',        hrs: 41, assignee: 'SE' },
+  { id: 'S1-Ops', group: 'be-s1', title: 'S1 Notion DB Setup',                hrs: 7,  assignee: 'Ops' },
 ];
 const s1End = scheduleParallel(beS1, '2026-03-23');
 
 // Phase S2 — Notion CRUD & Sync: starts after S1
 const beS2 = [
-  { id: 'BE-NC',  group: 'be-s2', title: 'Notion CRUD (BE-015..020)',                hrs: 21, assignee: 'TL+SE' },
-  { id: 'BE-SY',  group: 'be-s2', title: 'Sync Engine (BE-021..027)',                hrs: 24, assignee: 'TL+SE' },
-  { id: 'OPS-S2', group: 'be-s2', title: 'Webhook + Migration (OPS-003,005)',        hrs: 4,  assignee: 'Ops+SE' },
+  { id: 'S2-TL',  group: 'be-s2', title: 'S2 Design + Reviews',               hrs: 10, assignee: 'TL' },
+  { id: 'S2-SE',  group: 'be-s2', title: 'S2 Notion CRUD + Sync Engine',      hrs: 38, assignee: 'SE' },
+  { id: 'S2-Ops', group: 'be-s2', title: 'S2 Webhook + Migration',            hrs: 1,  assignee: 'Ops' },
 ];
 const s2End = scheduleParallel(beS2, s1End);
 
 // Phase S3 — LLM & Write APIs: starts after S2
 const beS3 = [
-  { id: 'BE-LLM', group: 'be-s3', title: 'LLM Generation (BE-028..034)',             hrs: 23, assignee: 'TL+SE' },
-  { id: 'BE-VAL', group: 'be-s3', title: 'Validation & Enrichment (BE-046..047)',    hrs: 16, assignee: 'TL+SE' },
-  { id: 'BE-WQ',  group: 'be-s3', title: 'Notion Write Queue (BE-042)',              hrs: 8,  assignee: 'SE' },
-  { id: 'BE-WA',  group: 'be-s3', title: 'Write APIs (BE-035..041)',                 hrs: 25, assignee: 'TL+SE' },
+  { id: 'S3-TL',  group: 'be-s3', title: 'S3 Design + Validation + Reviews',  hrs: 19, assignee: 'TL' },
+  { id: 'S3-SE',  group: 'be-s3', title: 'S3 LLM + Write Queue + APIs',       hrs: 52, assignee: 'SE' },
 ];
 const s3End = scheduleParallel(beS3, s2End);
 
 // Phase S4 — CC Integration: starts after S3
 const beS4 = [
-  { id: 'CC-D',   group: 'be-s4', title: 'CC Design + Read APIs (CC-001..004)',      hrs: 25, assignee: 'TL+SE' },
-  { id: 'CC-R',   group: 'be-s4', title: 'CC Response Builders (CC-005..007,015)',    hrs: 15, assignee: 'SE' },
-  { id: 'CC-P',   group: 'be-s4', title: 'CC Proxy + Events (CC-008..010,019)',      hrs: 12, assignee: 'SE' },
-  { id: 'CC-N',   group: 'be-s4', title: 'Push Notifs + Messaging (CC-012..018)',    hrs: 24, assignee: 'SE' },
+  { id: 'S4-TL',  group: 'be-s4', title: 'S4 CC Design',                      hrs: 5,  assignee: 'TL' },
+  { id: 'S4-SE',  group: 'be-s4', title: 'S4 CC APIs + Push + Messaging',     hrs: 71, assignee: 'SE' },
 ];
 const s4End = scheduleParallel(beS4, s3End);
 
 // Phase S5 — Testing: starts after S4
 const beS5 = [
-  { id: 'QA-U',   group: 'be-s5', title: 'Unit Tests (QA-001..003)',                 hrs: 7,  assignee: 'SE' },
-  { id: 'QA-I',   group: 'be-s5', title: 'Integration Tests (QA-004..005)',          hrs: 4,  assignee: 'SE' },
-  { id: 'QA-E',   group: 'be-s5', title: 'E2E + Hardening (QA-006..009)',            hrs: 13, assignee: 'TL+SE' },
+  { id: 'S5-TL',  group: 'be-s5', title: 'S5 Security Audit',                 hrs: 3,  assignee: 'TL' },
+  { id: 'S5-SE',  group: 'be-s5', title: 'S5 Unit + Integration + E2E',       hrs: 21, assignee: 'SE' },
 ];
 const s5End = scheduleParallel(beS5, s4End);
 
@@ -354,7 +348,7 @@ function renderGantt() {
     MOBILE_TASKS.forEach(t => rows.push({ type: 'task', ...t, stream: 'mobile' }));
   }
   if (showBackend) {
-    rows.push({ type: 'header', label: 'BACKEND  (TL + SE + Ops — 230h)', stream: 'backend' });
+    rows.push({ type: 'header', label: 'BACKEND  (TL 47h + SE 223h + Ops 8h = 278h)', stream: 'backend' });
     BACKEND_TASKS.forEach(t => rows.push({ type: 'task', ...t, stream: 'backend' }));
   }
 
