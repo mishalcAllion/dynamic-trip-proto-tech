@@ -217,47 +217,59 @@ const MOBILE_TASKS = scheduleChain([
 ], '2026-03-23');
 
 // --- Backend tasks (from backend Excel, 278h total) ---
-// Split by person: TL (47h), SE (223h), Ops (7.5h)
-// TL and SE work in parallel within each phase. Phases are sequential.
+// Split by person: TL (47h), SE (223h), Ops (8h)
+// Each person's tasks are a sequential chain — no idle gaps.
+// TL, SE, and Ops run in parallel with each other.
+// SE depends on TL's design within each phase, so SE starts after TL finishes
+// the design portion of that phase (not after all TL work).
 
-// Phase S1 — Foundation
-const beS1 = [
-  { id: 'S1-TL',  group: 'be-s1', title: 'S1 Design + Reviews',               hrs: 10, assignee: 'TL' },
-  { id: 'S1-SE',  group: 'be-s1', title: 'S1 Schemas + Utils + Infra',        hrs: 41, assignee: 'SE' },
-  { id: 'S1-Ops', group: 'be-s1', title: 'S1 Notion DB Setup',                hrs: 7,  assignee: 'Ops' },
-];
-const s1End = scheduleParallel(beS1, '2026-03-23');
+// TL chain: design -> review -> design -> review -> ... (47h total)
+const TL_TASKS = scheduleChain([
+  { id: 'S1-TL',  group: 'be-s1', title: 'S1 Design + Reviews',              hrs: 10, assignee: 'TL' },
+  { id: 'S2-TL',  group: 'be-s2', title: 'S2 Design + Reviews',              hrs: 10, assignee: 'TL' },
+  { id: 'S3-TL',  group: 'be-s3', title: 'S3 Design + Validation + Reviews', hrs: 19, assignee: 'TL' },
+  { id: 'S4-TL',  group: 'be-s4', title: 'S4 CC Design',                     hrs: 5,  assignee: 'TL' },
+  { id: 'S5-TL',  group: 'be-s5', title: 'S5 Security Audit',                hrs: 3,  assignee: 'TL' },
+], '2026-03-23');
 
-// Phase S2 — Notion CRUD & Sync: starts after S1
-const beS2 = [
-  { id: 'S2-TL',  group: 'be-s2', title: 'S2 Design + Reviews',               hrs: 10, assignee: 'TL' },
-  { id: 'S2-SE',  group: 'be-s2', title: 'S2 Notion CRUD + Sync Engine',      hrs: 38, assignee: 'SE' },
-  { id: 'S2-Ops', group: 'be-s2', title: 'S2 Webhook + Migration',            hrs: 1,  assignee: 'Ops' },
-];
-const s2End = scheduleParallel(beS2, s1End);
+// SE chain: implementation tasks back-to-back (223h total)
+// SE for each phase can start once TL finishes design for that phase
+const s1TLEnd = TL_TASKS.find(t => t.id === 'S1-TL').end;
+const s2TLEnd = TL_TASKS.find(t => t.id === 'S2-TL').end;
+const s3TLEnd = TL_TASKS.find(t => t.id === 'S3-TL').end;
+const s4TLEnd = TL_TASKS.find(t => t.id === 'S4-TL').end;
+const s5TLEnd = TL_TASKS.find(t => t.id === 'S5-TL').end;
 
-// Phase S3 — LLM & Write APIs: starts after S2
-const beS3 = [
-  { id: 'S3-TL',  group: 'be-s3', title: 'S3 Design + Validation + Reviews',  hrs: 19, assignee: 'TL' },
-  { id: 'S3-SE',  group: 'be-s3', title: 'S3 LLM + Write Queue + APIs',       hrs: 52, assignee: 'SE' },
-];
-const s3End = scheduleParallel(beS3, s2End);
+// SE tasks: each phase starts after max(prev SE phase end, TL design end for that phase)
+const se1 = [{ id: 'S1-SE', group: 'be-s1', title: 'S1 Schemas + Utils + Infra',    hrs: 41, assignee: 'SE' }];
+const se1Start = s1TLEnd > '2026-03-23' ? s1TLEnd : '2026-03-23';
+scheduleChain(se1, se1Start);
 
-// Phase S4 — CC Integration: starts after S3
-const beS4 = [
-  { id: 'S4-TL',  group: 'be-s4', title: 'S4 CC Design',                      hrs: 5,  assignee: 'TL' },
-  { id: 'S4-SE',  group: 'be-s4', title: 'S4 CC APIs + Push + Messaging',     hrs: 71, assignee: 'SE' },
-];
-const s4End = scheduleParallel(beS4, s3End);
+const se2 = [{ id: 'S2-SE', group: 'be-s2', title: 'S2 Notion CRUD + Sync Engine',  hrs: 38, assignee: 'SE' }];
+const se2Start = se1[0].end > s2TLEnd ? se1[0].end : s2TLEnd;
+scheduleChain(se2, se2Start);
 
-// Phase S5 — Testing: starts after S4
-const beS5 = [
-  { id: 'S5-TL',  group: 'be-s5', title: 'S5 Security Audit',                 hrs: 3,  assignee: 'TL' },
-  { id: 'S5-SE',  group: 'be-s5', title: 'S5 Unit + Integration + E2E',       hrs: 21, assignee: 'SE' },
-];
-const s5End = scheduleParallel(beS5, s4End);
+const se3 = [{ id: 'S3-SE', group: 'be-s3', title: 'S3 LLM + Write Queue + APIs',   hrs: 52, assignee: 'SE' }];
+const se3Start = se2[0].end > s3TLEnd ? se2[0].end : s3TLEnd;
+scheduleChain(se3, se3Start);
 
-const BACKEND_TASKS = [...beS1, ...beS2, ...beS3, ...beS4, ...beS5];
+const se4 = [{ id: 'S4-SE', group: 'be-s4', title: 'S4 CC APIs + Push + Messaging',  hrs: 71, assignee: 'SE' }];
+const se4Start = se3[0].end > s4TLEnd ? se3[0].end : s4TLEnd;
+scheduleChain(se4, se4Start);
+
+const se5 = [{ id: 'S5-SE', group: 'be-s5', title: 'S5 Unit + Integration + E2E',    hrs: 21, assignee: 'SE' }];
+const se5Start = se4[0].end > s5TLEnd ? se4[0].end : s5TLEnd;
+scheduleChain(se5, se5Start);
+
+const SE_TASKS = [...se1, ...se2, ...se3, ...se4, ...se5];
+
+// Ops chain: small tasks, back-to-back (8h total)
+const OPS_TASKS = scheduleChain([
+  { id: 'S1-Ops', group: 'be-s1', title: 'S1 Notion DB Setup',               hrs: 7,  assignee: 'Ops' },
+  { id: 'S2-Ops', group: 'be-s2', title: 'S2 Webhook + Migration',           hrs: 1,  assignee: 'Ops' },
+], '2026-03-23');
+
+const BACKEND_TASKS = [...TL_TASKS, ...SE_TASKS, ...OPS_TASKS];
 
 // --- META (computed after scheduling) ---
 const allEndDates = [...MOBILE_TASKS, ...BACKEND_TASKS].map(t => t.end).sort();
