@@ -379,7 +379,8 @@ function renderGantt() {
   const todayIdx = dayIndex(today, startDate);
 
   let html = '';
-  html += `<div class="relative overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50" style="max-width:100%;">`;
+  // Outer: scroll both axes, with max-height so vertical scroll kicks in
+  html += `<div class="relative overflow-auto rounded-xl border border-slate-800 bg-slate-900/50" style="max-width:100%; max-height:85vh;">`;
   html += `<div class="relative" style="width:${totalWidth}px; min-height:${totalHeight}px;">`;
 
   // Sprint bands
@@ -393,12 +394,18 @@ function renderGantt() {
     html += `<div class="absolute top-0" style="left:${left}px; width:${right - left}px; height:100%; background:${bg}; z-index:0;"></div>`;
   });
 
-  // Weekend column shading (full height)
+  // Vertical grid lines + weekend shading (full height)
   allDates.forEach((ds, di) => {
+    const left = labelColWidth + di * dayWidth;
+    const d = parseDate(ds);
+    const isMonday = d.getDay() === 1;
+    // Weekend shading
     if (isWeekend(ds)) {
-      const left = labelColWidth + di * dayWidth;
       html += `<div class="absolute top-0" style="left:${left}px; width:${dayWidth}px; height:100%; background:rgba(100,116,139,0.08); z-index:1;"></div>`;
     }
+    // Grid line: stronger on Mondays, subtle on other days
+    const lineColor = isMonday ? 'rgba(100,116,139,0.2)' : 'rgba(100,116,139,0.07)';
+    html += `<div class="absolute top-0" style="left:${left}px; width:1px; height:100%; background:${lineColor}; z-index:1;"></div>`;
   });
 
   // Top header row
