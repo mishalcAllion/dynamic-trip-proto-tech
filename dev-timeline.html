@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev Timeline — Dynamic Trip Page (Mobile + Backend)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #020617; }
+    .font-mono, code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    .toggle-track { transition: background-color 200ms ease; }
+    .toggle-thumb { transition: transform 200ms ease; }
+    .bar-hover:hover { filter: brightness(1.3); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+<main class="p-6 lg:p-8 max-w-[1800px] mx-auto min-h-screen">
+
+  <!-- Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-100 tracking-tight">Dev Timeline — Dynamic Trip Page</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Mobile + Backend | Dev starts Mar 23, 2026 | Ship target: Apr 15, 2026
+    </p>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Mobile (Waruna)</div>
+      <div class="text-2xl font-bold font-mono text-blue-400">112h</div>
+      <div class="text-xs text-slate-500 mt-1">74h dev + 6h Android + 32h testing</div>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Backend (TL + SE + Ops)</div>
+      <div class="text-2xl font-bold font-mono text-teal-400">230h</div>
+      <div class="text-xs text-slate-500 mt-1">5 phases across 6 weeks</div>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Combined Total</div>
+      <div class="text-2xl font-bold font-mono text-slate-100">342h</div>
+      <div class="text-xs text-slate-500 mt-1">~8.5 person-weeks</div>
+    </div>
+    <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Ship Date</div>
+      <div class="text-2xl font-bold font-mono text-red-400">Apr 15</div>
+      <div class="text-xs text-slate-500 mt-1">23 calendar days from start</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="flex flex-wrap items-center gap-6 mb-6 p-4 bg-slate-900/60 border border-slate-800 rounded-xl">
+    <!-- Filter toggles -->
+    <label class="flex items-center gap-3 cursor-pointer select-none group">
+      <div class="relative">
+        <input type="checkbox" id="toggle-mobile" class="sr-only peer" checked />
+        <div class="toggle-track w-10 h-5 bg-slate-700 rounded-full peer-checked:bg-blue-500/60"></div>
+        <div class="toggle-thumb absolute top-0.5 left-0.5 w-4 h-4 bg-slate-300 rounded-full peer-checked:translate-x-5 peer-checked:bg-blue-400"></div>
+      </div>
+      <span class="text-sm text-slate-400 group-hover:text-slate-300">Mobile</span>
+    </label>
+    <label class="flex items-center gap-3 cursor-pointer select-none group">
+      <div class="relative">
+        <input type="checkbox" id="toggle-backend" class="sr-only peer" checked />
+        <div class="toggle-track w-10 h-5 bg-slate-700 rounded-full peer-checked:bg-teal-500/60"></div>
+        <div class="toggle-thumb absolute top-0.5 left-0.5 w-4 h-4 bg-slate-300 rounded-full peer-checked:translate-x-5 peer-checked:bg-teal-400"></div>
+      </div>
+      <span class="text-sm text-slate-400 group-hover:text-slate-300">Backend</span>
+    </label>
+
+    <div class="hidden sm:block w-px h-6 bg-slate-700"></div>
+
+    <!-- Legend -->
+    <div class="flex items-center gap-4 flex-wrap">
+      <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 mr-1">Legend</span>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span><span class="text-xs text-slate-400">Screens</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span><span class="text-xs text-slate-400">Details</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span><span class="text-xs text-slate-400">Modals</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span><span class="text-xs text-slate-400">Cross-Cut</span></div>
+      <div class="hidden sm:block w-px h-4 bg-slate-700"></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span><span class="text-xs text-slate-400">BE Foundation</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span class="text-xs text-slate-400">BE Notion/Sync</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span><span class="text-xs text-slate-400">BE LLM/APIs</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lime-500"></span><span class="text-xs text-slate-400">BE CC Integration</span></div>
+      <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span><span class="text-xs text-slate-400">BE Testing</span></div>
+    </div>
+  </div>
+
+  <!-- Gantt chart -->
+  <div id="gantt-chart" class="mb-10">
+    <div class="flex items-center justify-center h-40 text-slate-600 text-sm">Loading chart...</div>
+  </div>
+
+  <!-- Sprint summary cards -->
+  <div class="mb-4">
+    <h2 class="text-lg font-semibold text-slate-200 mb-4">Sprint Breakdown</h2>
+  </div>
+  <div id="sprint-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12"></div>
+
+</main>
+
+<!-- Tooltip container -->
+<div id="gantt-tip" class="fixed z-[200] opacity-0 transition-opacity duration-150 pointer-events-none" style="max-width:380px;"></div>
+
+<script>
+// ============================================================
+//  DATA
+// ============================================================
+
+// ============================================================
+//  AUTO-SCHEDULER: 8h = 1 working day, skip weekends
+// ============================================================
+function addWorkingDays(startDate, workDays) {
+  const d = parseDate(startDate);
+  let remaining = workDays;
+  while (remaining > 0) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) remaining--;
+  }
+  return fmtDate(d);
+}
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function nextWorkday(dateStr) {
+  const d = parseDate(dateStr);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return fmtDate(d);
+}
+
+const SPRINTS = [
+  { name: 'Sprint 9',  start: '2026-03-16', end: '2026-03-28' },
+  { name: 'Sprint 10', start: '2026-03-29', end: '2026-04-11' },
+  { name: 'Sprint 11', start: '2026-04-12', end: '2026-04-25' },
+  { name: 'Sprint 12', start: '2026-04-26', end: '2026-05-09' },
+  { name: 'Sprint 13', start: '2026-05-10', end: '2026-05-23' },
+];
+// Schedule a sequential chain: pack small tasks into the same day.
+// 8h = 1 working day. Multiple tasks can share a day if they fit within 8h.
+function scheduleChain(tasks, chainStart) {
+  let cursor = nextWorkday(chainStart);
+  let hrsUsedToday = 0; // hours consumed in the current cursor day
+
+  tasks.forEach(t => {
+    // If this task doesn't fit in the remaining hours today, advance the cursor
+    if (hrsUsedToday > 0 && hrsUsedToday + t.hrs > 8) {
+      cursor = addWorkingDays(cursor, 1);
+      hrsUsedToday = 0;
+    }
+
+    t.start = cursor;
+
+    if (t.hrs <= 8 - hrsUsedToday) {
+      // Fits within current day (or starts a fresh day)
+      t.end = addWorkingDays(cursor, 1); // 1-day bar
+      hrsUsedToday += t.hrs;
+      if (hrsUsedToday >= 8) {
+        cursor = t.end;
+        hrsUsedToday = 0;
+      }
+      // else: cursor stays, next task can share the day
+    } else {
+      // Multi-day task: takes ceil(hrs/8) working days
+      const workDays = Math.ceil(t.hrs / 8);
+      t.end = addWorkingDays(cursor, workDays);
+      cursor = t.end;
+      hrsUsedToday = 0;
+    }
+  });
+  return tasks;
+}
+// Schedule parallel groups: within a phase, sub-groups can overlap
+// Each sub-group starts at phaseStart; next phase starts after longest sub-group
+function scheduleParallel(taskGroups, phaseStart) {
+  let latestEnd = phaseStart;
+  taskGroups.forEach(t => {
+    t.start = nextWorkday(phaseStart);
+    const workDays = Math.max(1, Math.ceil(t.hrs / 8));
+    t.end = addWorkingDays(t.start, workDays);
+    if (t.end > latestEnd) latestEnd = t.end;
+  });
+  return latestEnd;
+}
+
+// --- Mobile tasks (from Waruna's Excel, 112h total) ---
+// Sequential chain: Waruna works on one thing at a time
+const MOBILE_TASKS = scheduleChain([
+  // Screens
+  { id: 'S1',  group: 'mob-screen', title: 'Trip Received',             hrs: 8,  assignee: 'Waruna' },
+  { id: 'S2',  group: 'mob-screen', title: 'Getting Started',           hrs: 2,  assignee: 'Waruna' },
+  { id: 'S3',  group: 'mob-screen', title: 'Planning (Summary)',        hrs: 13, assignee: 'Waruna' },
+  { id: 'S4',  group: 'mob-screen', title: 'Planning (Detailed)',       hrs: 10, assignee: 'Waruna' },
+  { id: 'S5',  group: 'mob-screen', title: 'Review Your Options',       hrs: 2,  assignee: 'Waruna' },
+  { id: 'S6',  group: 'mob-screen', title: 'Booking Underway (Sum)',    hrs: 2,  assignee: 'Waruna' },
+  { id: 'S7',  group: 'mob-screen', title: 'Booking Underway (Det)',    hrs: 2,  assignee: 'Waruna' },
+  { id: 'S8',  group: 'mob-screen', title: 'Itinerary Confirmed (Sum)', hrs: 2,  assignee: 'Waruna' },
+  { id: 'S9',  group: 'mob-screen', title: 'Itinerary Confirmed (Det)', hrs: 2,  assignee: 'Waruna' },
+  { id: 'S10', group: 'mob-screen', title: 'Enjoy Your Trip',           hrs: 2,  assignee: 'Waruna' },
+  { id: 'S11', group: 'mob-screen', title: 'Welcome Back',             hrs: 2,  assignee: 'Waruna' },
+  // Detail Views
+  { id: 'D1',  group: 'mob-detail', title: 'Flight Detail',            hrs: 3,  assignee: 'Waruna' },
+  { id: 'D2',  group: 'mob-detail', title: 'Hotel Detail',             hrs: 10, assignee: 'Waruna' },
+  { id: 'D3',  group: 'mob-detail', title: 'Experience Detail',        hrs: 5,  assignee: 'Waruna' },
+  // Modals
+  { id: 'M1',  group: 'mob-modal',  title: 'Review Modal',             hrs: 2,  assignee: 'Waruna' },
+  { id: 'M2',  group: 'mob-modal',  title: 'Suggestions Modal',        hrs: 2,  assignee: 'Waruna' },
+  { id: 'M3',  group: 'mob-modal',  title: 'Request Changes',          hrs: 2,  assignee: 'Waruna' },
+  { id: 'M4',  group: 'mob-modal',  title: 'Ratings Modal',            hrs: 2,  assignee: 'Waruna' },
+  // Cross-cutting
+  { id: 'X1',  group: 'mob-xcut',   title: 'Android Adjustments',      hrs: 6,  assignee: 'Waruna' },
+  { id: 'X2',  group: 'mob-xcut',   title: 'Dev Testing & Bug Fixes',  hrs: 32, assignee: 'Waruna' },
+], '2026-03-23');
+
+// --- Backend tasks (from backend Excel, ~230h total) ---
+// Backend has multiple engineers so sub-tasks within a phase run in parallel,
+// but phases are sequential (S1 -> S2 -> S3 -> S4 -> S5)
+
+// Phase S1 — Foundation: Schemas, Utilities, Config, Ops run in parallel
+const beS1 = [
+  { id: 'BE-S',   group: 'be-s1', title: 'Schemas (BE-001..005)',                    hrs: 16, assignee: 'TL+SE' },
+  { id: 'BE-U',   group: 'be-s1', title: 'Utilities (BE-006..011)',                  hrs: 17, assignee: 'TL+SE' },
+  { id: 'BE-C',   group: 'be-s1', title: 'Config & Infra (BE-012..014, INFRA-001)',  hrs: 18, assignee: 'SE' },
+  { id: 'OPS-S1', group: 'be-s1', title: 'Ops Notion Setup (OPS-001..004,006)',      hrs: 7,  assignee: 'Ops' },
+];
+const s1End = scheduleParallel(beS1, '2026-03-23');
+
+// Phase S2 — Notion CRUD & Sync: starts after S1
+const beS2 = [
+  { id: 'BE-NC',  group: 'be-s2', title: 'Notion CRUD (BE-015..020)',                hrs: 21, assignee: 'TL+SE' },
+  { id: 'BE-SY',  group: 'be-s2', title: 'Sync Engine (BE-021..027)',                hrs: 24, assignee: 'TL+SE' },
+  { id: 'OPS-S2', group: 'be-s2', title: 'Webhook + Migration (OPS-003,005)',        hrs: 4,  assignee: 'Ops+SE' },
+];
+const s2End = scheduleParallel(beS2, s1End);
+
+// Phase S3 — LLM & Write APIs: starts after S2
+const beS3 = [
+  { id: 'BE-LLM', group: 'be-s3', title: 'LLM Generation (BE-028..034)',             hrs: 23, assignee: 'TL+SE' },
+  { id: 'BE-VAL', group: 'be-s3', title: 'Validation & Enrichment (BE-046..047)',    hrs: 16, assignee: 'TL+SE' },
+  { id: 'BE-WQ',  group: 'be-s3', title: 'Notion Write Queue (BE-042)',              hrs: 8,  assignee: 'SE' },
+  { id: 'BE-WA',  group: 'be-s3', title: 'Write APIs (BE-035..041)',                 hrs: 25, assignee: 'TL+SE' },
+];
+const s3End = scheduleParallel(beS3, s2End);
+
+// Phase S4 — CC Integration: starts after S3
+const beS4 = [
+  { id: 'CC-D',   group: 'be-s4', title: 'CC Design + Read APIs (CC-001..004)',      hrs: 25, assignee: 'TL+SE' },
+  { id: 'CC-R',   group: 'be-s4', title: 'CC Response Builders (CC-005..007,015)',    hrs: 15, assignee: 'SE' },
+  { id: 'CC-P',   group: 'be-s4', title: 'CC Proxy + Events (CC-008..010,019)',      hrs: 12, assignee: 'SE' },
+  { id: 'CC-N',   group: 'be-s4', title: 'Push Notifs + Messaging (CC-012..018)',    hrs: 24, assignee: 'SE' },
+];
+const s4End = scheduleParallel(beS4, s3End);
+
+// Phase S5 — Testing: starts after S4
+const beS5 = [
+  { id: 'QA-U',   group: 'be-s5', title: 'Unit Tests (QA-001..003)',                 hrs: 7,  assignee: 'SE' },
+  { id: 'QA-I',   group: 'be-s5', title: 'Integration Tests (QA-004..005)',          hrs: 4,  assignee: 'SE' },
+  { id: 'QA-E',   group: 'be-s5', title: 'E2E + Hardening (QA-006..009)',            hrs: 13, assignee: 'TL+SE' },
+];
+const s5End = scheduleParallel(beS5, s4End);
+
+const BACKEND_TASKS = [...beS1, ...beS2, ...beS3, ...beS4, ...beS5];
+
+// --- META (computed after scheduling) ---
+const allEndDates = [...MOBILE_TASKS, ...BACKEND_TASKS].map(t => t.end).sort();
+const latestEnd = allEndDates[allEndDates.length - 1];
+const metaEndD = parseDate(latestEnd); metaEndD.setDate(metaEndD.getDate() + 3);
+const META = {
+  shipDate: '2026-04-15',
+  startDate: '2026-03-23',
+  endDate: fmtDate(metaEndD),
+};
+
+// Group colors
+const GROUP_COLORS = {
+  'mob-screen': '#3b82f6', // blue
+  'mob-detail': '#6366f1', // indigo
+  'mob-modal':  '#8b5cf6', // violet
+  'mob-xcut':   '#0ea5e9', // sky
+  'be-s1':      '#14b8a6', // teal
+  'be-s2':      '#10b981', // emerald
+  'be-s3':      '#22c55e', // green
+  'be-s4':      '#84cc16', // lime
+  'be-s5':      '#eab308', // yellow
+};
+
+const GROUP_LABELS = {
+  'mob-screen': 'Screens',
+  'mob-detail': 'Detail Views',
+  'mob-modal':  'Modals',
+  'mob-xcut':   'Cross-Cutting',
+  'be-s1':      'S1: Foundation',
+  'be-s2':      'S2: Notion/Sync',
+  'be-s3':      'S3: LLM/APIs',
+  'be-s4':      'S4: CC Integration',
+  'be-s5':      'S5: Testing',
+};
+
+// ============================================================
+//  DATE UTILITIES
+// ============================================================
+function parseDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function daysBetween(a, b) {
+  return Math.round((parseDate(b) - parseDate(a)) / 86400000);
+}
+function dayIndex(dateStr, startStr) {
+  return daysBetween(startStr, dateStr);
+}
+function shortDate(str) {
+  return parseDate(str).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function dateRange(startStr, endStr) {
+  const dates = [];
+  const cur = parseDate(startStr);
+  const end = parseDate(endStr);
+  while (cur <= end) {
+    const y = cur.getFullYear();
+    const m = String(cur.getMonth() + 1).padStart(2, '0');
+    const d = String(cur.getDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${d}`);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+function isWeekend(str) { const d = parseDate(str).getDay(); return d === 0 || d === 6; }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ============================================================
+//  GANTT RENDERER
+// ============================================================
+function renderGantt() {
+  const container = document.getElementById('gantt-chart');
+  if (!container) return;
+
+  const showMobile  = document.getElementById('toggle-mobile').checked;
+  const showBackend = document.getElementById('toggle-backend').checked;
+
+  // Build visible task list with swim lane headers
+  const rows = []; // { type: 'header'|'task', ... }
+
+  if (showMobile) {
+    rows.push({ type: 'header', label: 'MOBILE  (Waruna — 112h)', stream: 'mobile' });
+    MOBILE_TASKS.forEach(t => rows.push({ type: 'task', ...t, stream: 'mobile' }));
+  }
+  if (showBackend) {
+    rows.push({ type: 'header', label: 'BACKEND  (TL + SE + Ops — 230h)', stream: 'backend' });
+    BACKEND_TASKS.forEach(t => rows.push({ type: 'task', ...t, stream: 'backend' }));
+  }
+
+  if (rows.length === 0) {
+    container.innerHTML = '<div class="flex items-center justify-center h-40 text-slate-600 text-sm">Toggle at least one stream to view</div>';
+    return;
+  }
+
+  const startDate = META.startDate;
+  const endDate = META.endDate;
+  const allDates = dateRange(startDate, endDate);
+  const totalDays = allDates.length;
+
+  const labelColWidth = 260;
+  const dayWidth = 28;
+  const rowHeight = 36;
+  const headerRowHeight = 28;
+  const topHeaderHeight = 60;
+
+  // Calculate total height
+  let totalHeight = topHeaderHeight;
+  rows.forEach(r => { totalHeight += r.type === 'header' ? headerRowHeight : rowHeight; });
+  totalHeight += 20;
+
+  const totalWidth = labelColWidth + (totalDays * dayWidth);
+  const shipDayIdx = dayIndex(META.shipDate, startDate);
+  const today = todayStr();
+  const todayIdx = dayIndex(today, startDate);
+
+  let html = '';
+  html += `<div class="relative overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/50" style="max-width:100%;">`;
+  html += `<div class="relative" style="width:${totalWidth}px; min-height:${totalHeight}px;">`;
+
+  // Sprint bands
+  SPRINTS.forEach((sprint, si) => {
+    const sStart = dayIndex(sprint.start, startDate);
+    const sEnd = dayIndex(sprint.end, startDate);
+    if (sEnd < 0 || sStart > totalDays) return;
+    const left = labelColWidth + Math.max(0, sStart) * dayWidth;
+    const right = labelColWidth + Math.min(totalDays, sEnd + 1) * dayWidth;
+    const bg = si % 2 === 0 ? 'rgba(30,41,59,0.5)' : 'rgba(15,23,42,0.5)';
+    html += `<div class="absolute top-0" style="left:${left}px; width:${right - left}px; height:100%; background:${bg}; z-index:0;"></div>`;
+  });
+
+  // Weekend column shading (full height)
+  allDates.forEach((ds, di) => {
+    if (isWeekend(ds)) {
+      const left = labelColWidth + di * dayWidth;
+      html += `<div class="absolute top-0" style="left:${left}px; width:${dayWidth}px; height:100%; background:rgba(100,116,139,0.08); z-index:1;"></div>`;
+    }
+  });
+
+  // Top header row
+  html += `<div class="sticky top-0 z-20 flex" style="height:${topHeaderHeight}px; background:linear-gradient(180deg,rgba(15,23,42,0.98) 0%,rgba(15,23,42,0.95) 100%); backdrop-filter:blur(8px);">`;
+  html += `<div class="shrink-0 flex items-end pb-1 px-3 border-b border-slate-700/50 border-r border-r-slate-800" style="width:${labelColWidth}px;">
+    <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Task</span>
+  </div>`;
+  html += `<div class="flex items-end relative" style="width:${totalDays * dayWidth}px;">`;
+
+  // Sprint labels
+  SPRINTS.forEach(sprint => {
+    const sStart = dayIndex(sprint.start, startDate);
+    const sEnd = dayIndex(sprint.end, startDate);
+    if (sEnd < 0 || sStart > totalDays) return;
+    const left = Math.max(0, sStart) * dayWidth;
+    const right = Math.min(totalDays, sEnd + 1) * dayWidth;
+    html += `<div class="absolute flex items-center justify-center" style="left:${left}px; width:${right - left}px; top:4px; height:20px;">
+      <span class="text-xs font-semibold text-slate-400 tracking-wide">${sprint.name}</span>
+    </div>`;
+  });
+
+  // Day labels
+  allDates.forEach((ds, i) => {
+    const d = parseDate(ds);
+    const dayNum = d.getDate();
+    const isWknd = isWeekend(ds);
+    const txtCol = isWknd ? 'text-slate-600' : 'text-slate-500';
+    const isMonday = d.getDay() === 1;
+    let monthLabel = '';
+    if (dayNum === 1 || i === 0) {
+      monthLabel = `<span class="text-[9px] text-slate-600 block leading-none">${d.toLocaleDateString('en-US',{month:'short'})}</span>`;
+    }
+    const bl = isMonday ? 'border-l border-l-slate-700/30' : '';
+    html += `<div class="inline-flex flex-col items-center justify-end pb-1 ${bl} border-b border-slate-700/50" style="width:${dayWidth}px; height:${topHeaderHeight - 24}px; position:absolute; left:${i * dayWidth}px; bottom:0;">
+      ${monthLabel}
+      <span class="text-[10px] font-mono ${txtCol}">${dayNum}</span>
+    </div>`;
+  });
+
+  html += `</div></div>`; // close header
+
+  // Rows
+  let curTop = topHeaderHeight;
+  rows.forEach(row => {
+    if (row.type === 'header') {
+      // Swim lane header
+      const bgCol = row.stream === 'mobile' ? 'rgba(59,130,246,0.08)' : 'rgba(20,184,166,0.08)';
+      const txtCol = row.stream === 'mobile' ? 'text-blue-400' : 'text-teal-400';
+      html += `<div class="absolute flex items-center" style="top:${curTop}px; width:${totalWidth}px; height:${headerRowHeight}px; background:${bgCol}; z-index:3;">
+        <div class="px-4 flex items-center gap-2" style="width:${labelColWidth}px;">
+          <span class="text-[10px] font-bold uppercase tracking-widest ${txtCol}">${row.label}</span>
+        </div>
+        <div style="width:${totalDays * dayWidth}px; height:${headerRowHeight}px;"></div>
+      </div>`;
+      curTop += headerRowHeight;
+      return;
+    }
+
+    // Task row
+    const t = row;
+    const color = GROUP_COLORS[t.group] || '#64748b';
+    const groupLabel = GROUP_LABELS[t.group] || '';
+
+    html += `<div class="absolute flex" style="top:${curTop}px; width:${totalWidth}px; height:${rowHeight}px;">`;
+
+    // Label col
+    html += `<div class="shrink-0 flex items-center gap-2 px-3 border-b border-slate-800/50 border-r border-r-slate-800/50 bg-slate-900/80" style="width:${labelColWidth}px; height:${rowHeight}px;">
+      <span class="w-2 h-2 rounded-full shrink-0" style="background:${color};"></span>
+      <span class="text-[10px] font-mono text-slate-500 shrink-0 w-12">${t.id}</span>
+      <span class="text-xs text-slate-300 truncate flex-1" title="${escHtml(t.title)}">${escHtml(t.title)}</span>
+      <span class="text-[10px] font-mono text-slate-600 shrink-0">${t.hrs}h</span>
+    </div>`;
+
+    // Bar area
+    html += `<div class="relative border-b border-slate-800/30" style="width:${totalDays * dayWidth}px; height:${rowHeight}px;">`;
+
+    // (weekend shading handled by full-height columns above)
+
+    // Bar
+    const barStartIdx = dayIndex(t.start, startDate);
+    const barEndIdx = dayIndex(t.end, startDate);
+    const barDays = barEndIdx - barStartIdx;
+    const barLeft = barStartIdx * dayWidth + 2;
+    const barWidth = Math.max(barDays * dayWidth - 4, dayWidth - 4);
+    const barTop = 6;
+    const barHeight = rowHeight - 12;
+
+    const tipData = JSON.stringify({
+      id: t.id, title: t.title, hrs: t.hrs, assignee: t.assignee,
+      start: shortDate(t.start), end: shortDate(t.end),
+      group: groupLabel, color: color, stream: t.stream
+    }).replace(/'/g, '&#39;');
+
+    html += `<div class="absolute rounded bar-hover cursor-pointer" style="left:${barLeft}px; top:${barTop}px; width:${barWidth}px; height:${barHeight}px; background:${color}; z-index:5;" data-tip='${tipData}'>
+      ${barWidth > 70 ? `<span class="absolute inset-0 flex items-center px-2 text-[9px] font-medium text-white/90 truncate pointer-events-none">${t.id} (${t.hrs}h)</span>` : ''}
+    </div>`;
+
+    html += `</div></div>`; // close bar area + row
+    curTop += rowHeight;
+  });
+
+  // Ship date line
+  if (shipDayIdx >= 0 && shipDayIdx <= totalDays) {
+    const shipLeft = labelColWidth + (shipDayIdx * dayWidth) + (dayWidth / 2);
+    html += `<div class="absolute top-0 z-10 pointer-events-none" style="left:${shipLeft}px; width:2px; height:100%; background:rgba(239,68,68,0.7);">
+      <div class="absolute left-1/2 -translate-x-1/2 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-b-md whitespace-nowrap" style="top:0;">
+        Ship ${shortDate(META.shipDate)}
+      </div>
+    </div>`;
+  }
+
+  // Today marker
+  if (todayIdx >= 0 && todayIdx <= totalDays) {
+    const todayLeft = labelColWidth + (todayIdx * dayWidth) + (dayWidth / 2);
+    html += `<div class="absolute top-0 z-[15] pointer-events-none" style="left:${todayLeft}px; transform:translateX(-50%);">
+      <div class="flex flex-col items-center" style="margin-top:4px;">
+        <div class="bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap shadow-lg shadow-green-500/30">
+          Today &middot; ${shortDate(today)}
+        </div>
+        <div style="width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid #22c55e;"></div>
+      </div>
+    </div>
+    <div class="absolute pointer-events-none" style="left:${todayLeft}px; top:${topHeaderHeight}px; width:2px; height:${curTop - topHeaderHeight}px; background:rgba(34,197,94,0.5); transform:translateX(-50%); z-index:14;"></div>`;
+  }
+
+  html += `</div></div>`; // close wrappers
+  container.innerHTML = html;
+
+  // Tooltips
+  const tip = document.getElementById('gantt-tip');
+  let tipTimer = null;
+  container.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', e => {
+      clearTimeout(tipTimer);
+      try {
+        const d = JSON.parse(el.getAttribute('data-tip'));
+        const streamBadge = d.stream === 'mobile'
+          ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-blue-500/20 text-blue-400">Mobile</span>'
+          : '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-teal-500/20 text-teal-400">Backend</span>';
+        tip.innerHTML = `
+          <div class="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-3 space-y-1.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full shrink-0" style="background:${d.color}"></span>
+              <span class="text-xs font-mono text-slate-300">${d.id}</span>
+              <span class="text-xs text-slate-100 font-medium">${escHtml(d.title)}</span>
+            </div>
+            <div class="text-[11px] text-slate-400">${d.assignee} &middot; ${d.hrs}h</div>
+            <div class="text-[11px] text-slate-500">${d.start} &ndash; ${d.end}</div>
+            <div class="flex gap-1 flex-wrap">
+              ${streamBadge}
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-700 text-slate-300">${d.group}</span>
+            </div>
+          </div>`;
+        tip.classList.remove('opacity-0');
+        tip.classList.add('opacity-100');
+        requestAnimationFrame(() => {
+          const rect = el.getBoundingClientRect();
+          const tipRect = tip.getBoundingClientRect();
+          let top = rect.top - tipRect.height - 8;
+          let left = rect.left + (rect.width / 2) - (tipRect.width / 2);
+          if (top < 8) top = rect.bottom + 8;
+          if (left < 8) left = 8;
+          if (left + tipRect.width > window.innerWidth - 8) left = window.innerWidth - tipRect.width - 8;
+          tip.style.top = top + 'px';
+          tip.style.left = left + 'px';
+        });
+      } catch(err) {}
+    });
+    el.addEventListener('mouseleave', () => {
+      tipTimer = setTimeout(() => { tip.classList.remove('opacity-100'); tip.classList.add('opacity-0'); }, 100);
+    });
+  });
+}
+
+// ============================================================
+//  SPRINT CARDS
+// ============================================================
+function renderSprintCards() {
+  const container = document.getElementById('sprint-cards');
+  if (!container) return;
+
+  const allTasks = [...MOBILE_TASKS, ...BACKEND_TASKS];
+  const accentBorder = ['border-blue-500/40', 'border-green-500/40', 'border-red-500/40', 'border-purple-500/40'];
+  const accentDot = ['bg-blue-500', 'bg-green-500', 'bg-red-500', 'bg-purple-500'];
+
+  container.innerHTML = SPRINTS.map((sprint, idx) => {
+    const overlap = allTasks.filter(t => t.start <= sprint.end && t.end >= sprint.start);
+    const mobTasks = overlap.filter(t => t.stream === undefined ? MOBILE_TASKS.includes(t) : false);
+    const mobOverlap = MOBILE_TASKS.filter(t => t.start <= sprint.end && t.end >= sprint.start);
+    const beOverlap  = BACKEND_TASKS.filter(t => t.start <= sprint.end && t.end >= sprint.start);
+    const mobHrs = mobOverlap.reduce((s, t) => s + t.hrs, 0);
+    const beHrs  = beOverlap.reduce((s, t) => s + t.hrs, 0);
+    const hasShip = META.shipDate >= sprint.start && META.shipDate <= sprint.end;
+
+    return `
+      <div class="bg-slate-900/80 border ${accentBorder[idx] || 'border-slate-700'} rounded-xl p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full ${accentDot[idx] || 'bg-slate-500'}"></span>
+            <span class="text-sm font-semibold text-slate-200">${sprint.name}</span>
+            ${hasShip ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-red-500/15 text-red-400 border border-red-500/20">Ship</span>' : ''}
+          </div>
+        </div>
+        <div class="text-xs text-slate-500 font-mono">${shortDate(sprint.start)} &ndash; ${shortDate(sprint.end)}</div>
+        <div class="flex items-center gap-4 pt-1">
+          <div>
+            <span class="text-xs text-slate-500">Mobile:</span>
+            <span class="text-sm font-bold font-mono text-blue-400 ml-1">${mobHrs}h</span>
+            <span class="text-[10px] text-slate-600 ml-1">(${mobOverlap.length} tasks)</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500">Backend:</span>
+            <span class="text-sm font-bold font-mono text-teal-400 ml-1">${beHrs}h</span>
+            <span class="text-[10px] text-slate-600 ml-1">(${beOverlap.length} tasks)</span>
+          </div>
+        </div>
+        <div class="pt-2 border-t border-slate-800">
+          <div class="text-xs text-slate-500">Combined: <span class="text-slate-200 font-bold font-mono">${mobHrs + beHrs}h</span></div>
+        </div>
+        <div class="space-y-1">
+          <span class="text-[10px] font-bold uppercase tracking-widest text-slate-600 block">Tasks</span>
+          <div class="flex flex-wrap gap-1">
+            ${mobOverlap.map(t => `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">${t.id}</span>`).join('')}
+            ${beOverlap.map(t => `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-400 border border-teal-500/20">${t.id}</span>`).join('')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderGantt();
+  renderSprintCards();
+
+  document.getElementById('toggle-mobile').addEventListener('change', renderGantt);
+  document.getElementById('toggle-backend').addEventListener('change', renderGantt);
+});
+</script>
+</body>
+</html>
